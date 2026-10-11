@@ -43,8 +43,4 @@ def navegacion(request):
         # El panel no debe marcarse activo en las subsecciones.
         panel = grupos[-1]["items"][0]
         panel["activo"] = ruta == panel["url"]
-    if usuario is not None and usuario.is_authenticated and usuario.is_staff:
-        grupos[-1 if es_administrador(usuario) else 0]["items"].append(
-            {"titulo": "Editor de datos", "url": "/admin/", "icono": "database", "activo": False}
-        )
     return {"nav_grupos": grupos, "hoy": timezone.localdate()}

@@ -6,13 +6,28 @@ Soporte informático del protocolo de titulación:
 para la Evaluación de Emprendimientos de Triple Impacto".
 """
 
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-frr-desarrollo-local-cambiar-en-produccion"
-DEBUG = True
-ALLOWED_HOSTS = ["*"]
+# En el servidor estos valores llegan por variables de entorno (archivo .env que
+# carga systemd). Sin ellas el proyecto funciona en modo desarrollo local.
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-frr-desarrollo-local-cambiar-en-produccion")
+DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
+ALLOWED_HOSTS = [h for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",") if h]
+CSRF_TRUSTED_ORIGINS = [o for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o]
+
+if not DEBUG:
+    # Producción detrás de Nginx con HTTPS.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "same-origin"
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -84,6 +99,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"  # destino de collectstatic; lo sirve Nginx
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

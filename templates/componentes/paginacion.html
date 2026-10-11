@@ -1,0 +1,16 @@
+{% load iconos %}{% if pagina.paginator.num_pages > 1 %}
+<nav class="paginacion" aria-label="Paginación">
+  {% if pagina.has_previous %}
+    <a href="?{% if parametros %}{{ parametros }}&amp;{% endif %}pagina={{ pagina.previous_page_number }}" rel="prev">{% icono "chevron-left" "ico-sm" %}<span class="sr-only">Página anterior</span></a>
+  {% else %}<span class="deshabilitado" aria-hidden="true">{% icono "chevron-left" "ico-sm" %}</span>{% endif %}
+  {% for n in pagina.paginator.page_range %}
+    {% if n == pagina.number %}<span aria-current="page">{{ n }}</span>
+    {% elif n == 1 or n == pagina.paginator.num_pages or n >= pagina.number|add:-2 and n <= pagina.number|add:2 %}
+      <a href="?{% if parametros %}{{ parametros }}&amp;{% endif %}pagina={{ n }}" aria-label="Página {{ n }}">{{ n }}</a>
+    {% elif n == pagina.number|add:-3 or n == pagina.number|add:3 %}<span class="deshabilitado" aria-hidden="true">…</span>{% endif %}
+  {% endfor %}
+  {% if pagina.has_next %}
+    <a href="?{% if parametros %}{{ parametros }}&amp;{% endif %}pagina={{ pagina.next_page_number }}" rel="next">{% icono "chevron-right" "ico-sm" %}<span class="sr-only">Página siguiente</span></a>
+  {% else %}<span class="deshabilitado" aria-hidden="true">{% icono "chevron-right" "ico-sm" %}</span>{% endif %}
+</nav>
+{% endif %}

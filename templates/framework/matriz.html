@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block titulo %}Matriz del Framework{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">Objetivo específico 2</p>
+  <h1>Matriz de construcción del Framework</h1>
+  <p class="lede">Dimensiones, variables, indicadores y KPIs con sus cortes de nivel. Los cortes
+  traducen cada valor medido a la escala 0–4; se editan desde el panel de administración.</p>
+</section>
+
+<section class="tarjeta">
+  <h2>Escala de niveles</h2>
+  <div class="escala">
+    {% for n, nombre in niveles %}
+      <div><b class="l{{ n }}">{{ n }} · {{ nombre|upper }}</b></div>
+    {% endfor %}
+  </div>
+</section>
+
+{% for fila in filas %}
+<section class="tarjeta">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+    <h2>{{ fila.dimension.codigo }} · {{ fila.dimension.nombre }}</h2>
+    <span class="nota">peso w = {{ fila.peso_normalizado }} · {{ fila.n_indicadores }} indicadores</span>
+  </div>
+  {% if fila.dimension.descripcion %}<p class="nota">{{ fila.dimension.descripcion }}</p>{% endif %}
+
+  <div class="tscroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Variable</th><th>Código</th><th>Indicador / KPI</th><th>Unidad</th>
+          <th>Dirección</th><th class="num">Peso</th>
+          <th class="num">c1</th><th class="num">c2</th><th class="num">c3</th><th class="num">c4</th>
+          <th>RNA</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for v in fila.variables %}
+        {% for i in v.indicadores.all %}
+        <tr>
+          <td>{% if forloop.first %}{{ v.nombre }}{% endif %}</td>
+          <td><code>{{ i.codigo }}</code></td>
+          <td>{{ i.nombre }}{% if i.formula %}<br><span class="nota">{{ i.formula }}</span>{% endif %}</td>
+          <td>{{ i.unidad }}</td>
+          <td class="nota">{{ i.get_direccion_display }}</td>
+          <td class="num">{{ i.peso }}</td>
+          <td class="num">{{ i.c1 }}</td><td class="num">{{ i.c2 }}</td>
+          <td class="num">{{ i.c3 }}</td><td class="num">{{ i.c4 }}</td>
+          <td>{% if i.es_entrada_rna %}sí{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% empty %}
+<section class="tarjeta">
+  <p>No hay dimensiones cargadas. Ejecute <code>python manage.py cargar_framework</code>.</p>
+</section>
+{% endfor %}
+{% endblock %}

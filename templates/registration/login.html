@@ -1,0 +1,31 @@
+{% load static iconos %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ingresar · Framework de Rentabilidad Regenerativa</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230f4c5c%27/%3E%3Cpath d=%27M7 23l6-7 5 4 7-9%27 fill=%27none%27 stroke=%27white%27 stroke-width=%273%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="{% static 'css/frr.css' %}">
+</head>
+<body>
+<main class="login">
+  <form class="login-caja" method="post" novalidate>
+    {% csrf_token %}
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="kpi-ico" style="width:44px;height:44px">{% icono "shield" "ico-lg" %}</span>
+      <div><p class="eyebrow">Rentabilidad Regenerativa</p><h1 style="font-size:1.35rem">Iniciar sesión</h1></div>
+    </div>
+    {% if form.non_field_errors %}
+      <div class="alerta error" role="alert">{% icono "circle-alert" %}<span>Usuario o contraseña incorrectos. Recuerde que la contraseña distingue mayúsculas y minúsculas.</span></div>
+    {% endif %}
+    {% if next and user.is_authenticated %}
+      <div class="alerta warning">{% icono "triangle-alert" %}<span>Su cuenta no tiene permiso para ver esa página.</span></div>
+    {% endif %}
+    {% for campo in form %}{% include "componentes/campo.html" %}{% endfor %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="boton" type="submit">{% icono "log-in" "ico-sm" %}Ingresar</button>
+    <a class="nota" href="/">← Volver al tablero</a>
+  </form>
+</main>
+</body>
+</html>

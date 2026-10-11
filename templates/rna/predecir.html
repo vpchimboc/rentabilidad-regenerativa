@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titulo %}Predicción RNA{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">Objetivo específico 3</p>
+  <h1>Predicción del IRR con la red</h1>
+  <p class="lede">Ingrese los valores de los indicadores. La red estima el índice y se contrasta
+  contra el cálculo analítico del framework: la diferencia entre ambos es la medida del error
+  del modelo en ese punto del espacio de variables.</p>
+</section>
+
+{% if resultado %}
+<div class="rejilla">
+  <section class="tarjeta">
+    <p class="eyebrow">Predicción de la RNA</p>
+    <p class="cifra">{{ resultado.prediccion|floatformat:4 }}</p>
+  </section>
+  <section class="tarjeta">
+    <p class="eyebrow">Cálculo analítico</p>
+    <p class="cifra">{{ resultado.analitico|floatformat:4 }}</p>
+  </section>
+  <section class="tarjeta">
+    <p class="eyebrow">Error</p>
+    <p class="cifra">{{ resultado.error|floatformat:4 }}</p>
+    <p class="nota">RMSE del modelo: {{ resultado.modelo.metricas.rmse }}</p>
+  </section>
+</div>
+{% endif %}
+
+<section class="tarjeta">
+  <form method="post">{% csrf_token %}
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Dimensión</th><th>Indicador</th><th>Unidad</th><th class="num">Valor</th>
+          <th class="num">c1</th><th class="num">c4</th></tr></thead>
+        <tbody>
+        {% for f in filas %}
+          <tr>
+            <td>{{ f.ind.variable.dimension.codigo }}</td>
+            <td><label for="{{ f.ind.codigo }}">{{ f.ind.nombre }}</label></td>
+            <td>{{ f.ind.unidad }}</td>
+            <td class="num">
+              <input id="{{ f.ind.codigo }}" type="number" step="any" name="{{ f.ind.codigo }}"
+                     value="{{ f.valor|default_if_none:'' }}">
+            </td>
+            <td class="num nota">{{ f.ind.c1 }}</td>
+            <td class="num nota">{{ f.ind.c4 }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:12px"><button class="boton" type="submit">Predecir</button></p>
+  </form>
+</section>
+{% endblock %}

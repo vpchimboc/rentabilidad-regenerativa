@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block titulo %}{{ emp.nombre }}{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">{{ emp.get_sector_display }} · {{ emp.ciudad }}</p>
+  <h1>{{ emp.nombre }}</h1>
+  <p class="lede">{{ emp.descripcion }}</p>
+</section>
+
+{% for p in periodos %}
+<section class="tarjeta">
+  <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+    <h2>Período {{ p.anio }} {{ p.etiqueta }}</h2>
+    <span>
+      <a class="boton" href="{% url 'evaluar_periodo' p.pk %}">Calcular IRR</a>
+      <a class="boton sec" href="{% url 'escenario_simular' p.pk %}">Simular escenarios</a>
+      <a class="boton sec" href="/admin/emprendimientos/periodo/{{ p.pk }}/change/">Editar datos</a>
+    </span>
+  </div>
+
+  <div class="rejilla">
+    <div><p class="eyebrow">Ventas</p><p class="cifra-sm">{{ p.ventas|floatformat:0 }}</p><p class="nota">USD</p></div>
+    <div><p class="eyebrow">Punto de equilibrio</p><p class="cifra-sm">{{ p.punto_equilibrio|floatformat:0 }}</p><p class="nota">USD (break-even)</p></div>
+    <div><p class="eyebrow">Ventas / break-even</p><p class="cifra-sm">{{ p.margen_sobre_break_even|floatformat:2 }}x</p><p class="nota">condición necesaria, no suficiente</p></div>
+    <div><p class="eyebrow">Mediciones</p><p class="cifra-sm">{{ p.mediciones.count }}</p><p class="nota">indicadores cargados</p></div>
+  </div>
+
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Dimensión</th><th>Indicador</th><th class="num">Valor</th><th>Unidad</th>
+        <th class="num">Nivel</th><th>Fuente</th></tr></thead>
+      <tbody>
+      {% for m in p.mediciones.all %}
+        <tr>
+          <td>{{ m.indicador.variable.dimension.codigo }}</td>
+          <td>{{ m.indicador.nombre }}</td>
+          <td class="num">{{ m.valor }}</td>
+          <td>{{ m.indicador.unidad }}</td>
+          <td class="num"><span class="pill l{{ m.nivel }}">{{ m.nivel }}</span></td>
+          <td class="nota">{{ m.fuente }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="nota">Sin mediciones cargadas para este período.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if p.evaluaciones.all %}
+  <h3>Historial de evaluaciones</h3>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Fecha</th><th class="num">IRR</th><th class="num">Mín. dim.</th>
+        <th>Veredicto</th><th>Cuello</th></tr></thead>
+      <tbody>
+      {% for ev in p.evaluaciones.all %}
+        <tr>
+          <td>{{ ev.creado|date:"d/m/Y H:i" }}</td>
+          <td class="num">{{ ev.irr|floatformat:4 }}</td>
+          <td class="num">{{ ev.minimo_dimensional }}</td>
+          <td>{{ ev.veredicto }}</td>
+          <td>{{ ev.cuello_de_botella }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

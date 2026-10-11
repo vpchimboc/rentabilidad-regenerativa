@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block titulo %}RNA{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">Objetivo específico 3</p>
+  <h1>Red Neuronal Artificial (MLP)</h1>
+  <p class="lede">Perceptrón multicapa entrenado por retropropagación. Las entradas son los
+  indicadores del framework y la salida es el Índice de Rentabilidad Regenerativa. Cuando no
+  se dispone de datos reales suficientes, el protocolo prevé usar escenarios simulados
+  derivados del propio framework: es lo que hace el generador de muestras.</p>
+</section>
+
+<div class="split">
+  <section class="tarjeta">
+    <h2>Entrenar modelo</h2>
+    <form method="post" action="{% url 'rna_entrenar' %}" class="linea">{% csrf_token %}
+      <div><label for="n_muestras">Muestras simuladas</label>
+        <input id="n_muestras" type="number" name="n_muestras" value="600" min="50" max="5000"></div>
+      <div><label for="n_ocultas">Neuronas ocultas</label>
+        <input id="n_ocultas" type="number" name="n_ocultas" value="8" min="2" max="32"></div>
+      <div><label for="epocas">Épocas</label>
+        <input id="epocas" type="number" name="epocas" value="300" min="20" max="2000"></div>
+      <div><label for="lr">Tasa de aprendizaje</label>
+        <input id="lr" type="number" step="0.01" name="lr" value="0.05"></div>
+      <button class="boton" type="submit">Entrenar</button>
+    </form>
+    <p class="nota">Con 600 muestras y 300 épocas el entrenamiento toma unos segundos.</p>
+  </section>
+
+  <section class="tarjeta">
+    <h2>Modelo activo</h2>
+    {% if modelo %}
+      <p class="nota">Arquitectura {{ modelo.n_entradas }}–{{ modelo.n_ocultas }}–1 ·
+        entrenado el {{ modelo.creado|date:"d/m/Y H:i" }}</p>
+      <div class="kv"><span>Muestras</span><span>{{ modelo.n_muestras }}</span></div>
+      <div class="kv"><span>Épocas</span><span>{{ modelo.epocas }}</span></div>
+      <div class="kv"><span>Tasa de aprendizaje</span><span>{{ modelo.tasa_aprendizaje }}</span></div>
+      <div class="kv"><span>MSE</span><span>{{ modelo.metricas.mse }}</span></div>
+      <div class="kv"><span>RMSE</span><span>{{ modelo.metricas.rmse }}</span></div>
+      <div class="kv"><span>MAE</span><span>{{ modelo.metricas.mae }}</span></div>
+      <div class="kv"><span>R²</span><span>{{ modelo.metricas.r2 }}</span></div>
+      <div class="kv"><span>n validación</span><span>{{ modelo.metricas.n_validacion }}</span></div>
+      <p><a class="boton sec" href="{% url 'rna_predecir' %}">Predecir con el modelo</a></p>
+    {% else %}
+      <p class="nota">No hay ningún modelo entrenado todavía.</p>
+    {% endif %}
+  </section>
+</div>
+
+{% if modelo %}
+<section class="tarjeta">
+  <h2>Curva de entrenamiento</h2>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th class="num">Época</th><th class="num">MSE</th><th>Convergencia</th></tr></thead>
+      <tbody>
+      {% for h in modelo.historial %}
+        <tr>
+          <td class="num">{{ h.epoca }}</td>
+          <td class="num">{{ h.mse }}</td>
+          <td><div class="barra"><span class="bg3" style="width:{% widthratio h.mse 0.1 100 %}%"></span></div></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+<section class="tarjeta">
+  <h2>Variables de entrada de la red</h2>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Dimensión</th><th>Código</th><th>Indicador</th><th>Unidad</th></tr></thead>
+      <tbody>
+      {% for i in entradas %}
+        <tr>
+          <td>{{ i.variable.dimension.codigo }}</td>
+          <td><code>{{ i.codigo }}</code></td>
+          <td>{{ i.nombre }}</td>
+          <td>{{ i.unidad }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

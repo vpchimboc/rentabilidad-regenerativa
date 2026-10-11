@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load iconos %}
+{% block titulo %}{% if objeto %}Editar usuario{% else %}Nuevo usuario{% endif %}{% endblock %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'adm_panel' %}">Administración</a>{% icono "chevron-right" "ico-sm" %}<a href="{% url 'adm_usuarios' %}">Usuarios</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">{% if objeto %}{{ objeto.username }}{% else %}Nuevo{% endif %}</span>{% endblock %}
+
+{% block contenido %}
+<div class="cabecera-pagina">
+  <div>
+    <p class="eyebrow">Usuarios</p>
+    <h1>{% if objeto %}Editar «{{ objeto.username }}»{% else %}Nuevo usuario{% endif %}</h1>
+    <p class="lede">Los campos marcados con <span style="color:var(--c-error)">*</span> son obligatorios.</p>
+  </div>
+</div>
+
+<form class="tarjeta" method="post" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+    <div class="alerta error" role="alert">{% icono "circle-alert" %}<span>{% for e in form.non_field_errors %}{{ e }} {% endfor %}</span></div>
+  {% elif form.errors %}
+    <div class="alerta error" role="alert">{% icono "circle-alert" %}<span>Revise los campos marcados en rojo.</span></div>
+  {% endif %}
+
+  <div class="form-seccion">
+    <header><h2>{% icono "user" %}Identificación</h2><p>Nombre de acceso y datos de contacto.</p></header>
+    <div class="form-campos">
+      {% include "componentes/campo.html" with campo=form.username %}
+      {% include "componentes/campo.html" with campo=form.email %}
+      {% include "componentes/campo.html" with campo=form.first_name %}
+      {% include "componentes/campo.html" with campo=form.last_name %}
+    </div>
+  </div>
+
+  {% if form.password1 %}
+  <div class="form-seccion">
+    <header><h2>{% icono "shield" %}Contraseña inicial</h2><p>Comuníquela por un canal seguro y pida que la cambie al ingresar.</p></header>
+    <div class="form-campos">
+      {% include "componentes/campo.html" with campo=form.password1 %}
+      {% include "componentes/campo.html" with campo=form.password2 %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="form-seccion">
+    <header><h2>{% icono "users" %}Roles y acceso</h2><p>Aplique el mínimo privilegio: conceda solo los roles necesarios.</p></header>
+    <div class="form-campos" style="grid-template-columns:1fr">
+      {% include "componentes/campo.html" with campo=form.groups %}
+      {% include "componentes/campo.html" with campo=form.is_active %}
+      {% include "componentes/campo.html" with campo=form.is_staff %}
+      {% include "componentes/campo.html" with campo=form.is_superuser %}
+    </div>
+  </div>
+
+  <div class="form-acciones">
+    <a class="boton sec" href="{% url 'adm_usuarios' %}">Cancelar</a>
+    <button class="boton" type="submit">{% icono "check" "ico-sm" %}Guardar usuario</button>
+  </div>
+</form>
+{% endblock %}

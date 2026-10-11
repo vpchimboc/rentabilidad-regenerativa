@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load iconos %}
+{% block titulo %}Usuarios{% endblock %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'adm_panel' %}">Administración</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Usuarios</span>{% endblock %}
+
+{% block contenido %}
+<div class="cabecera-pagina">
+  <div>
+    <p class="eyebrow">Administración</p>
+    <h1>Usuarios</h1>
+    <p class="lede">Cuentas con acceso al sistema. Los permisos se conceden mediante roles.</p>
+  </div>
+  <div class="acciones"><a class="boton" href="{% url 'adm_usuario_crear' %}">{% icono "plus" "ico-sm" %}Nuevo usuario</a></div>
+</div>
+
+<form class="filtros" method="get" aria-label="Filtrar usuarios">
+  <div class="campo" style="flex:2 1 240px"><label for="f-q">Buscar</label>
+    <input id="f-q" type="search" name="q" value="{{ q }}" placeholder="Usuario, nombre o correo"></div>
+  <div class="campo"><label for="f-rol">Rol</label>
+    <select id="f-rol" name="rol"><option value="">Todos</option>
+      {% for r in roles %}<option value="{{ r.pk }}"{% if r.pk|stringformat:"s" == rol %} selected{% endif %}>{{ r.name }}</option>{% endfor %}</select></div>
+  <div class="campo"><label for="f-estado">Estado</label>
+    <select id="f-estado" name="estado"><option value="">Todos</option>
+      <option value="activo"{% if estado == "activo" %} selected{% endif %}>Activos</option>
+      <option value="inactivo"{% if estado == "inactivo" %} selected{% endif %}>Inactivos</option></select></div>
+  <div class="acciones"><button class="boton" type="submit">{% icono "search" "ico-sm" %}Buscar</button>
+    {% if filtros %}<a class="boton fantasma" href="{% url 'adm_usuarios' %}">Limpiar</a>{% endif %}</div>
+</form>
+
+<section class="tarjeta">
+  <div class="tabla-pie"><h2 style="font-size:var(--t-md)">{{ total }} usuario{{ total|pluralize }}</h2></div>
+  {% if pagina.object_list %}
+  <div class="tscroll">
+    <table>
+      <thead><tr><th scope="col">Usuario</th><th scope="col">Correo</th><th scope="col">Roles</th>
+        <th scope="col">Estado</th><th scope="col">Último ingreso</th><th scope="col"><span class="sr-only">Acciones</span></th></tr></thead>
+      <tbody>
+      {% for u in pagina.object_list %}
+        <tr>
+          <td><div class="celda-principal"><a href="{% url 'adm_usuario_editar' u.pk %}">{{ u.get_full_name|default:u.username }}</a>
+            <small>@{{ u.username }}{% if u.is_superuser %} · superusuario{% endif %}{% if u.pk == user.pk %} · usted{% endif %}</small></div></td>
+          <td>{{ u.email|default:"—" }}</td>
+          <td>{% for g in u.groups.all %}<span class="etq info">{{ g.name }}</span> {% empty %}<span class="nota">Sin rol</span>{% endfor %}</td>
+          <td>{% if u.is_active %}<span class="etq exito">{% icono "check" %}Activo</span>{% else %}<span class="etq neutro">{% icono "power" %}Inactivo</span>{% endif %}</td>
+          <td class="nota">{{ u.last_login|date:"j M Y · H:i"|default:"Nunca" }}</td>
+          <td class="acciones-celda">
+            <a class="boton sec peq" href="{% url 'adm_usuario_editar' u.pk %}">{% icono "pencil" "ico-sm" %}Editar</a>
+            <form method="post" action="{% url 'adm_usuario_estado' u.pk %}" style="display:inline"
+                  data-confirmar="{% if u.is_active %}¿Desactivar la cuenta «{{ u.username }}»?{% else %}¿Activar la cuenta «{{ u.username }}»?{% endif %}"
+                  data-confirmar-texto="{% if u.is_active %}La persona no podrá iniciar sesión. Sus registros se conservan.{% else %}La persona podrá volver a iniciar sesión.{% endif %}">
+              {% csrf_token %}
+              <button class="boton {% if u.is_active %}peligro-sec{% else %}sec{% endif %} peq" type="submit"{% if u.pk == user.pk %} disabled title="No puede desactivar su propia cuenta"{% endif %}>
+                {% icono "power" "ico-sm" %}{% if u.is_active %}Desactivar{% else %}Activar{% endif %}</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="tabla-pie"><span>Mostrando {{ pagina.start_index }}–{{ pagina.end_index }} de {{ total }}</span>
+    {% with parametros=filtros %}{% include "componentes/paginacion.html" %}{% endwith %}</div>
+  {% else %}
+    <div class="estado-vacio"><span class="ico-vacio">{% icono "users" "ico-lg" %}</span>
+      <h3>No hay usuarios que coincidan</h3><p><a href="{% url 'adm_usuarios' %}">Quite los filtros</a> o cree un usuario nuevo.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

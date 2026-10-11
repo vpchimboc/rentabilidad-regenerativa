@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load iconos %}
+{% block titulo %}Roles y permisos{% endblock %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'adm_panel' %}">Administración</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Roles y permisos</span>{% endblock %}
+
+{% block contenido %}
+<div class="cabecera-pagina">
+  <div>
+    <p class="eyebrow">Administración</p>
+    <h1>Roles y permisos</h1>
+    <p class="lede">Un rol agrupa permisos por módulo y acción. Asigne a cada persona solo los roles que necesita.</p>
+  </div>
+</div>
+
+<div class="split">
+  <section class="tarjeta" aria-labelledby="t-roles">
+    <h2 id="t-roles">{% icono "shield" %} Roles configurados</h2>
+    {% if grupos %}
+    <div class="tscroll">
+      <table>
+        <thead><tr><th scope="col">Rol</th><th scope="col" class="num">Usuarios</th><th scope="col" class="num">Permisos</th><th scope="col"><span class="sr-only">Acciones</span></th></tr></thead>
+        <tbody>
+        {% for g in grupos %}
+          <tr><td><a href="{% url 'adm_rol' g.pk %}"><b>{{ g.name }}</b></a></td>
+            <td class="num">{{ g.n_usuarios }}</td><td class="num">{{ g.n_permisos }}</td>
+            <td class="acciones-celda"><a class="boton sec peq" href="{% url 'adm_rol' g.pk %}">{% icono "pencil" "ico-sm" %}Permisos</a></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="estado-vacio"><span class="ico-vacio">{% icono "shield" "ico-lg" %}</span>
+        <h3>Todavía no hay roles</h3><p>Cree uno, por ejemplo «Analista» (consulta y evaluación) o «Administración».</p></div>
+    {% endif %}
+  </section>
+
+  <section class="tarjeta" aria-labelledby="t-nuevo">
+    <h2 id="t-nuevo">{% icono "plus" %} Nuevo rol</h2>
+    <form method="post" class="linea">
+      {% csrf_token %}
+      <div class="campo" style="flex:1 1 220px"><label for="id_nombre">Nombre del rol</label>
+        <input id="id_nombre" type="text" name="nombre" maxlength="150" required placeholder="Ej.: Analista financiera"></div>
+      <button class="boton" type="submit">{% icono "plus" "ico-sm" %}Crear rol</button>
+    </form>
+    <div class="alerta">{% icono "info" %}<span>Sugerencia de mínimo privilegio: <b>Consulta</b> (solo consultar),
+      <b>Analista</b> (consultar, crear y editar emprendimientos y escenarios), <b>Administración</b>
+      (además «Administrar el sistema»). Los superusuarios tienen todos los permisos sin necesidad de rol.</span></div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load iconos %}
+{% block titulo %}Rol {{ grupo.name }}{% endblock %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'adm_panel' %}">Administración</a>{% icono "chevron-right" "ico-sm" %}<a href="{% url 'adm_roles' %}">Roles</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">{{ grupo.name }}</span>{% endblock %}
+
+{% block contenido %}
+<div class="cabecera-pagina">
+  <div>
+    <p class="eyebrow">Roles y permisos</p>
+    <h1>{{ grupo.name }}</h1>
+    <p class="lede">Marque las acciones permitidas en cada módulo. Los cambios se aplican al guardar y quedan en la auditoría.</p>
+  </div>
+  <div class="acciones">
+    <form method="post" action="{% url 'adm_rol_eliminar' grupo.pk %}"
+          data-confirmar="¿Eliminar el rol «{{ grupo.name }}»?"
+          data-confirmar-texto="Sus {{ miembros|length }} usuarios perderán los permisos que les daba este rol. Esta acción no se puede deshacer.">
+      {% csrf_token %}
+      <button class="boton peligro-sec" type="submit">{% icono "x" "ico-sm" %}Eliminar rol</button>
+    </form>
+  </div>
+</div>
+
+<form method="post" class="tarjeta">
+  {% csrf_token %}
+  <h2>{% icono "shield" %} Matriz de permisos</h2>
+  <div class="tscroll">
+    <table class="matriz-permisos">
+      <caption class="sr-only">Permisos del rol {{ grupo.name }} por módulo y acción</caption>
+      <thead><tr><th scope="col">Módulo</th>{% for a, nombre in acciones %}<th scope="col">{{ nombre }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for fila in filas %}
+        <tr><th scope="row" style="text-transform:none;letter-spacing:0;font-size:var(--t-sm);color:var(--c-texto);background:#fff">{{ fila.modulo }}</th>
+          {% for c in fila.celdas %}
+            <td>{% if c.ids %}
+              <input type="checkbox" name="celda" value="{{ c.clave }}" id="c-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"{% if c.marcado %} checked{% endif %}
+                     aria-label="{{ c.nombre }} en {{ fila.modulo }}">
+              {% if c.parcial %}<span class="parcial">parcial</span>{% endif %}
+            {% else %}<span class="nota" aria-label="No aplica">—</span>{% endif %}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top:8px">Permisos especiales</h3>
+  <ul class="check-lista">
+    {% for e in especiales %}
+      <li><label for="esp-{{ e.permiso.id }}"><input type="checkbox" id="esp-{{ e.permiso.id }}" name="especial" value="{{ e.permiso.id }}"{% if e.marcado %} checked{% endif %}>
+        {% if e.permiso.codename == "exportar_datos" %}{% icono "download" "ico-sm" %}Exportar datos (CSV){% else %}{% icono "settings" "ico-sm" %}Administrar el sistema: usuarios, roles, configuración y auditoría{% endif %}</label></li>
+    {% endfor %}
+  </ul>
+  <p class="nota">«Parcial» indica que el rol tiene solo algunos de los permisos de esa celda (por ejemplo, asignados desde el editor de datos). Al guardar, la celda queda completa o vacía.</p>
+
+  <div class="form-acciones">
+    <a class="boton sec" href="{% url 'adm_roles' %}">Volver</a>
+    <button class="boton" type="submit">{% icono "check" "ico-sm" %}Guardar permisos</button>
+  </div>
+</form>
+
+<section class="tarjeta" aria-labelledby="t-miembros">
+  <h2 id="t-miembros">{% icono "users" %} Usuarios con este rol ({{ miembros|length }})</h2>
+  {% if miembros %}
+    <p>{% for u in miembros %}<a class="etq info" href="{% url 'adm_usuario_editar' u.pk %}">{{ u.username }}</a> {% endfor %}</p>
+  {% else %}<p class="nota">Ningún usuario tiene este rol. Asígnelo desde la ficha del usuario.</p>{% endif %}
+</section>
+{% endblock %}

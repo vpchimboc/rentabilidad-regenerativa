@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load iconos %}
+{% block titulo %}Auditoría{% endblock %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'adm_panel' %}">Administración</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Auditoría</span>{% endblock %}
+
+{% block contenido %}
+<div class="cabecera-pagina">
+  <div>
+    <p class="eyebrow">Administración</p>
+    <h1>Auditoría administrativa</h1>
+    <p class="lede">Registro de solo lectura. No contiene contraseñas, tokens ni datos personales innecesarios.</p>
+  </div>
+</div>
+
+<form class="filtros" method="get" aria-label="Filtrar registros">
+  <div class="campo"><label for="f-accion">Operación</label>
+    <select id="f-accion" name="accion"><option value="">Todas</option>
+      {% for v, n in acciones %}<option value="{{ v }}"{% if v == accion %} selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+  <div class="campo"><label for="f-usuario">Usuario</label>
+    <select id="f-usuario" name="usuario"><option value="">Todos</option>
+      {% for u in usuarios %}<option value="{{ u.pk }}"{% if u.pk|stringformat:"s" == usuario %} selected{% endif %}>{{ u.username }}</option>{% endfor %}</select></div>
+  <div class="campo"><label for="f-desde">Desde</label><input id="f-desde" type="date" name="desde" value="{{ desde }}"></div>
+  <div class="campo"><label for="f-hasta">Hasta</label><input id="f-hasta" type="date" name="hasta" value="{{ hasta }}"></div>
+  <div class="acciones"><button class="boton" type="submit">{% icono "filter" "ico-sm" %}Filtrar</button>
+    {% if filtros %}<a class="boton fantasma" href="{% url 'adm_auditoria' %}">Limpiar</a>{% endif %}</div>
+</form>
+
+<section class="tarjeta">
+  {% if pagina.object_list %}
+  <div class="tscroll">
+    <table>
+      <thead><tr><th scope="col">Fecha y hora</th><th scope="col">Usuario</th><th scope="col">Operación</th>
+        <th scope="col">Entidad</th><th scope="col">Objeto</th><th scope="col">Resultado</th><th scope="col">Contexto</th></tr></thead>
+      <tbody>
+      {% for r in pagina.object_list %}
+        <tr>
+          <td class="nota" style="white-space:nowrap">{{ r.fecha|date:"Y-m-d H:i:s" }}</td>
+          <td>{{ r.usuario.username|default:"—" }}</td>
+          <td>{{ r.get_accion_display }}</td>
+          <td>{{ r.entidad }}</td>
+          <td>{{ r.objeto|truncatechars:60 }}</td>
+          <td>{% if r.resultado == "OK" %}<span class="etq exito">{% icono "check" %}Correcto</span>
+              {% elif r.resultado == "DENEGADO" %}<span class="etq alerta">{% icono "shield" %}Denegado</span>
+              {% else %}<span class="etq error">{% icono "circle-alert" %}Error</span>{% endif %}</td>
+          <td class="nota">{% if r.detalle %}{% for k, v in r.detalle.items %}<div><b>{{ k }}</b>: {{ v|truncatechars:90 }}</div>{% endfor %}{% else %}—{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="tabla-pie"><span>{{ pagina.paginator.count }} registros</span>
+    {% with parametros=filtros %}{% include "componentes/paginacion.html" %}{% endwith %}</div>
+  {% else %}
+    <div class="estado-vacio"><span class="ico-vacio">{% icono "history" "ico-lg" %}</span>
+      <h3>Sin registros para estos filtros</h3><p>Amplíe el rango de fechas o quite los filtros.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

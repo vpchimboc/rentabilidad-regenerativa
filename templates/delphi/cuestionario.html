@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block titulo %}Cuestionario ronda {{ ronda.numero }}{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">Ronda {{ ronda.numero }} · {{ ronda.fecha|date:"d/m/Y" }}</p>
+  <h1>Cuestionario Delphi</h1>
+  <p class="lede">Escala Likert de cinco niveles: 1 = totalmente en desacuerdo,
+  5 = totalmente de acuerdo. Un ítem se considera válido cuando al menos el 80 % de los
+  expertos lo califica con 4 o 5.</p>
+</section>
+
+<section class="tarjeta">
+  <form method="get" class="linea">
+    <div>
+      <label for="experto">Experto que responde</label>
+      <select id="experto" name="experto">
+        <option value="">— seleccione —</option>
+        {% for e in expertos %}
+          <option value="{{ e.pk }}" {% if experto and experto.pk == e.pk %}selected{% endif %}>{{ e.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="boton sec" type="submit">Cargar</button>
+  </form>
+</section>
+
+{% if experto %}
+<section class="tarjeta">
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="experto" value="{{ experto.pk }}">
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Ítem</th><th>Criterio</th><th>Enunciado</th><th>Valoración</th><th>Comentario</th></tr></thead>
+        <tbody>
+        {% for f in filas %}
+          <tr>
+            <td><code>{{ f.item.codigo }}</code></td>
+            <td class="nota">{{ f.item.get_criterio_display }}</td>
+            <td>{{ f.item.enunciado }}<br><span class="nota">{{ f.item.componente }}</span></td>
+            <td style="white-space:nowrap">
+              {% for o in f.opciones %}
+                <label style="display:inline-block;margin-right:7px;color:inherit">
+                  <input type="radio" name="item_{{ f.item.id }}" value="{{ o.n }}" {% if o.marcado %}checked{% endif %}> {{ o.n }}
+                </label>
+              {% endfor %}
+            </td>
+            <td><input type="text" name="comentario_{{ f.item.id }}" value="{{ f.comentario }}" size="24"></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:12px">
+      <button class="boton" type="submit" name="guardar" value="1">Guardar valoraciones</button>
+      <a class="boton sec" href="{% url 'delphi_resultado' ronda.pk %}">Ver resultados de la ronda</a>
+    </p>
+  </form>
+</section>
+{% else %}
+<section class="tarjeta"><p class="nota">Seleccione un experto para cargar el cuestionario.</p></section>
+{% endif %}
+{% endblock %}

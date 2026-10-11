@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load iconos %}
+{% block titulo %}Confirmar acción{% endblock %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'adm_panel' %}">Administración</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Confirmar</span>{% endblock %}
+
+{% block contenido %}
+<section class="tarjeta" style="max-width:560px">
+  <div style="display:flex;gap:14px;align-items:flex-start">
+    <span class="kpi-ico {% if peligro %}error{% endif %}" style="width:44px;height:44px">{% icono "triangle-alert" "ico-lg" %}</span>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <h1 style="font-size:var(--t-xl)">{{ titulo }}</h1>
+      <p class="nota">{{ texto }}</p>
+    </div>
+  </div>
+  {% if error %}
+    <div class="alerta error" role="alert">{% icono "circle-alert" %}<span>{{ error }}</span></div>
+    <div class="form-acciones"><a class="boton sec" href="{% url volver %}">Volver</a></div>
+  {% else %}
+    <form method="post" class="form-acciones">
+      {% csrf_token %}
+      <input type="hidden" name="confirmado" value="1">
+      <a class="boton sec" href="{% url volver %}">Cancelar</a>
+      <button class="boton {% if peligro %}peligro{% endif %}" type="submit">{{ boton }}</button>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% load iconos %}
+{% block titulo %}Tablero ejecutivo{% endblock %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Tablero ejecutivo</span>{% endblock %}
+
+{% block contenido %}
+<div class="cabecera-pagina">
+  <div>
+    <p class="eyebrow">Más allá del break-even</p>
+    <h1>Tablero ejecutivo</h1>
+    <p class="lede">Desempeño financiero de los emprendimientos registrados{% if d.anio %} en el ejercicio {{ d.anio }}{% endif %}.
+      Las cifras proceden de los períodos guardados; no se estiman datos faltantes.</p>
+  </div>
+  <div class="acciones">
+    <a class="boton sec" href="{% url 'emprendimiento_lista' %}">{% icono "building" "ico-sm" %}Ver emprendimientos</a>
+  </div>
+</div>
+
+<form class="filtros" method="get" aria-label="Filtros del tablero">
+  <div class="campo">
+    <label for="f-anio">Ejercicio</label>
+    <select id="f-anio" name="anio">
+      {% for a in d.anios %}<option value="{{ a }}"{% if a == d.anio %} selected{% endif %}>{{ a }}</option>
+      {% empty %}<option value="">Sin períodos</option>{% endfor %}
+    </select>
+  </div>
+  <div class="campo">
+    <label for="f-sector">Sector económico</label>
+    <select id="f-sector" name="sector">
+      <option value="">Todos</option>
+      {% for v, n in sectores %}<option value="{{ v }}"{% if v == filtros.sector %} selected{% endif %}>{{ n }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="campo">
+    <label for="f-provincia">Provincia</label>
+    <select id="f-provincia" name="provincia">
+      <option value="">Todas</option>
+      {% for p in provincias %}<option value="{{ p }}"{% if p == filtros.provincia %} selected{% endif %}>{{ p|title }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="campo">
+    <label for="f-origen">Origen de los datos</label>
+    <select id="f-origen" name="origen">
+      {% for v, n in origenes %}<option value="{{ v }}"{% if v == filtros.origen %} selected{% endif %}>{{ n }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="acciones">
+    <button class="boton" type="submit">{% icono "filter" "ico-sm" %}Aplicar</button>
+    {% if hay_filtros %}<a class="boton fantasma" href="{% url 'tablero' %}">Limpiar</a>{% endif %}
+  </div>
+</form>
+
+{% if not d.periodos_anio %}
+  <section class="tarjeta">
+    <div class="estado-vacio">
+      <span class="ico-vacio">{% icono "chart-line" "ico-lg" %}</span>
+      <h3>No hay períodos financieros para esta selección</h3>
+      <p>Registre un período con ventas y costos para un emprendimiento, importe el dataset público con
+        <code>manage.py importar_emprendimientos</code> o amplíe los filtros.</p>
+    </div>
+  </section>
+{% else %}
+<section aria-labelledby="t-kpis">
+  <h2 id="t-kpis" class="sr-only">Indicadores clave</h2>
+  <div class="kpis">
+    <article class="kpi">
+      <div class="kpi-cab"><span class="kpi-ico">{% icono "building" %}</span>Emprendimientos</div>
+      <div class="kpi-valor">{{ d.total_emprendimientos|miles }}</div>
+      <div class="kpi-periodo">{% icono "calendar" "ico-sm" %}{{ d.periodos_anio }} con período en {{ d.anio }}</div>
+      <p class="kpi-ayuda">Registrados con los filtros aplicados, tengan o no datos financieros.</p>
+    </article>
+    <article class="kpi">
+      <div class="kpi-cab"><span class="kpi-ico">{% icono "trending-up" %}</span>Ingresos del período</div>
+      <div class="kpi-valor">{{ d.totales.ingresos|usd:0 }}</div>
+      <div class="kpi-periodo">{% icono "calendar" "ico-sm" %}Ejercicio {{ d.anio }}
+        {% if d.comparacion.ingresos is not None %}· <span class="etq {% if d.comparacion.ingresos >= 0 %}exito{% else %}error{% endif %}">
+          {% if d.comparacion.ingresos >= 0 %}{% icono "trending-up" %}+{% else %}{% icono "trending-down" %}{% endif %}{{ d.comparacion.ingresos|pct }}</span>{% endif %}</div>
+      <p class="kpi-ayuda">Suma de ventas.{% if d.comparacion %} Variación sobre {{ d.comparacion.anio }} con los {{ d.comparacion.n }} emprendimientos presentes en ambos años.{% else %} Sin año anterior comparable.{% endif %}</p>
+    </article>
+    <article class="kpi">
+      <div class="kpi-cab"><span class="kpi-ico alerta">{% icono "receipt" %}</span>Costos y gastos</div>
+      <div class="kpi-valor">{{ d.totales.costos|usd:0 }}</div>
+      <div class="kpi-periodo">{% icono "calendar" "ico-sm" %}Ejercicio {{ d.anio }}</div>
+      <p class="kpi-ayuda">Costos fijos más costos variables declarados en cada período.</p>
+    </article>
+    <article class="kpi">
+      <div class="kpi-cab"><span class="kpi-ico {% if d.totales.resultado >= 0 %}exito{% else %}error{% endif %}">{% icono "calculator" %}</span>Resultado operativo</div>
+      <div class="kpi-valor">{{ d.totales.resultado|usd:0 }}</div>
+      <div class="kpi-periodo">{% icono "calendar" "ico-sm" %}Ejercicio {{ d.anio }}</div>
+      <p class="kpi-ayuda">Ingresos − costos y gastos. No es la utilidad neta: no descuenta impuestos ni
+        participación de trabajadores, que no se registran por período.</p>
+    </article>
+    <article class="kpi">
+      <div class="kpi-cab"><span class="kpi-ico">{% icono "percent" %}</span>Margen operativo</div>
+      <div class="kpi-valor">{{ d.totales.margen|pct }}</div>
+      <div class="kpi-periodo">{% icono "calendar" "ico-sm" %}Ejercicio {{ d.anio }}</div>
+      <p class="kpi-ayuda">Resultado operativo sobre ingresos del conjunto filtrado.</p>
+    </article>
+    <article class="kpi">
+      <div class="kpi-cab"><span class="kpi-ico">{% icono "scale" %}</span>Sobre el punto de equilibrio</div>
+      <div class="kpi-valor">{{ d.sobre_pe }} <span class="nota">de {{ d.con_pe }}</span></div>
+      <div class="kpi-periodo">{% icono "calendar" "ico-sm" %}Mediana ventas / PE: {% if d.mediana_ventas_pe %}{{ d.mediana_ventas_pe|floatformat:2 }}×{% else %}—{% endif %}</div>
+      <p class="kpi-ayuda">Períodos cuyas ventas alcanzan el break-even (solo con margen de contribución positivo).</p>
+    </article>
+    <article class="kpi">
+      <div class="kpi-cab"><span class="kpi-ico exito">{% icono "circle-check" %}</span>Rentables</div>
+      <div class="kpi-valor">{{ d.rentables }} <span class="nota">de {{ d.con_ventas }}</span></div>
+      <div class="kpi-periodo">{% icono "calendar" "ico-sm" %}Ejercicio {{ d.anio }}</div>
+      <p class="kpi-ayuda">Períodos con ventas y resultado operativo positivo.</p>
+    </article>
+    <article class="kpi">
+      <div class="kpi-cab"><span class="kpi-ico error">{% icono "triangle-alert" %}</span>Con alertas</div>
+      <div class="kpi-valor">{{ d.alertas|length }}</div>
+      <div class="kpi-periodo">{% icono "calendar" "ico-sm" %}Ejercicio {{ d.anio }}</div>
+      <p class="kpi-ayuda">Sin ventas, con pérdida operativa o con ventas / PE menor a {{ umbral }}.</p>
+    </article>
+  </div>
+</section>
+
+<div class="split">
+  <section class="tarjeta" aria-labelledby="g-ic">
+    <div class="tarjeta-cab"><h2 id="g-ic">{% icono "chart-line" %}Ingresos frente a costos por sector</h2>
+      <div class="leyenda"><span><i class="serie-ingreso"></i>Ingresos</span><span><i class="serie-costo"></i>Costos y gastos</span></div></div>
+    <div class="grafico">
+      {% for s in d.ingresos_costos %}
+        <div class="grafico-fila">
+          <span class="rotulo" title="{{ s.rotulo }}">{{ s.rotulo }} <small class="nota">({{ s.n }})</small></span>
+          <div class="pista" aria-hidden="true"><span class="serie-ingreso" style="width:{{ s.ancho_i }}%"></span><span class="serie-costo" style="width:{{ s.ancho_c }}%"></span></div>
+          <span class="valor">{{ s.ingresos|usd:0 }}<br><small class="nota">{{ s.costos|usd:0 }}</small></span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="tarjeta" aria-labelledby="g-ev">
+    <div class="tarjeta-cab"><h2 id="g-ev">{% icono "trending-up" %}Evolución anual</h2>
+      <div class="leyenda"><span><i class="serie-ingreso"></i>Ingresos</span><span><i class="serie-exito"></i>Resultado ≥ 0</span><span><i class="serie-error"></i>Resultado &lt; 0</span></div></div>
+    <div class="grafico">
+      {% for e in d.evolucion %}
+        <div class="grafico-fila">
+          <span class="rotulo">{{ e.anio }} <small class="nota">({{ e.n }})</small></span>
+          <div class="pista" aria-hidden="true"><span class="serie-ingreso" style="width:{{ e.ancho_i }}%"></span><span class="{% if e.resultado >= 0 %}serie-exito{% else %}serie-error{% endif %}" style="width:{{ e.ancho_r }}%"></span></div>
+          <span class="valor">{{ e.ingresos|usd:0 }}<br><small class="nota">{{ e.resultado|usd:0 }}</small></span>
+        </div>
+      {% endfor %}
+    </div>
+    <p class="nota">Suma de los períodos registrados en cada año, entre paréntesis su número. La muestra
+      cambia de un año a otro: compare tendencias con cautela.</p>
+  </section>
+</div>
+
+<div class="split-3">
+  <section class="tarjeta" aria-labelledby="g-mg">
+    <h2 id="g-mg">Distribución del margen operativo</h2>
+    <div class="grafico">
+      {% for b in d.tramos_margen %}
+        <div class="grafico-fila"><span class="rotulo">{{ b.rotulo }}</span>
+          <div class="pista" aria-hidden="true"><span class="{% if forloop.first %}serie-error{% elif forloop.counter == 2 %}serie-alerta{% else %}serie-exito{% endif %}" style="width:{{ b.ancho }}%"></span></div>
+          <span class="valor">{{ b.valor }}</span></div>
+      {% endfor %}
+    </div>
+    <p class="nota">Períodos con ventas en {{ d.anio }}.</p>
+  </section>
+  <section class="tarjeta" aria-labelledby="g-se">
+    <h2 id="g-se">Emprendimientos por sector</h2>
+    <div class="grafico">
+      {% for b in d.sectores %}
+        <div class="grafico-fila"><span class="rotulo">{{ b.rotulo }}</span>
+          <div class="pista" aria-hidden="true"><span class="serie-ingreso" style="width:{{ b.ancho }}%"></span></div>
+          <span class="valor">{{ b.valor }}</span></div>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="tarjeta" aria-labelledby="g-pr">
+    <h2 id="g-pr">Por provincia</h2>
+    <div class="grafico">
+      {% for b in d.provincias %}
+        <div class="grafico-fila"><span class="rotulo" title="{{ b.rotulo }}">{{ b.rotulo }}</span>
+          <div class="pista" aria-hidden="true"><span class="serie-ingreso" style="width:{{ b.ancho }}%"></span></div>
+          <span class="valor">{{ b.valor }}</span></div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<section class="tarjeta" aria-labelledby="t-alertas">
+  <div class="tarjeta-cab">
+    <h2 id="t-alertas">{% icono "triangle-alert" %}Emprendimientos con alertas · {{ d.anio }}</h2>
+    <span class="nota">Ordenados de menor a mayor ventas / punto de equilibrio</span>
+  </div>
+  {% if d.alertas %}
+  <div class="tscroll">
+    <table>
+      <thead><tr><th scope="col">Emprendimiento</th><th scope="col">Sector</th><th scope="col" class="num">Ventas</th>
+        <th scope="col" class="num">Resultado</th><th scope="col" class="num">Ventas / PE</th><th scope="col">Motivo</th><th scope="col"><span class="sr-only">Acciones</span></th></tr></thead>
+      <tbody>
+      {% for f in d.alertas|slice:":10" %}
+        <tr>
+          <td><div class="celda-principal"><a href="{% url 'emprendimiento_detalle' f.periodo.emprendimiento_id %}">{{ f.periodo.emprendimiento.nombre }}</a>
+            <small>{{ f.periodo.emprendimiento.provincia|title|default:f.periodo.emprendimiento.ciudad }}</small></div></td>
+          <td>{{ f.periodo.emprendimiento.get_sector_display }}</td>
+          <td class="num">{{ f.ventas|usd:0 }}</td>
+          <td class="num">{{ f.resultado|usd:0 }}</td>
+          <td class="num">{% if f.ventas_pe is not None %}{{ f.ventas_pe|floatformat:2 }}×{% else %}—{% endif %}</td>
+          <td>{% if f.ventas <= 0 %}<span class="etq neutro">{% icono "info" %}Sin ventas</span>
+              {% elif f.resultado <= 0 %}<span class="etq error">{% icono "trending-down" %}Pérdida operativa</span>
+              {% else %}<span class="etq alerta">{% icono "scale" %}Bajo el equilibrio</span>{% endif %}</td>
+          <td class="acciones-celda"><a class="boton sec peq" href="{% url 'evaluar_periodo' f.periodo.pk %}">Evaluar</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if d.alertas|length > 10 %}<p class="nota">Se muestran 10 de {{ d.alertas|length }}.</p>{% endif %}
+  {% else %}
+    <div class="estado-vacio"><span class="ico-vacio">{% icono "circle-check" "ico-lg" %}</span>
+      <h3>Sin alertas en esta selección</h3><p>Todos los períodos tienen ventas, resultado positivo y superan el umbral de equilibrio.</p></div>
+  {% endif %}
+</section>
+{% endif %}
+
+<div class="split">
+  <section class="tarjeta" aria-labelledby="t-obj">
+    <h2 id="t-obj">Trazabilidad de objetivos del protocolo</h2>
+    {% for o in objetivos %}
+      <div class="objetivo">
+        <span class="n">{{ o.n }}</span>
+        <div style="flex:1;min-width:0">
+          <h3>{{ o.titulo }}</h3>
+          <p class="nota">{{ o.dato }}</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          {% if o.estado %}<span class="etq exito">{% icono "check" %}Con datos</span>{% else %}<span class="etq neutro">Pendiente</span>{% endif %}
+          <a class="boton sec peq" href="{{ o.url }}">{{ o.modulo }}</a>
+        </div>
+      </div>
+    {% endfor %}
+  </section>
+
+  <section class="tarjeta" aria-labelledby="t-ev">
+    <h2 id="t-ev">Últimas evaluaciones del IRR</h2>
+    {% if evaluaciones %}
+    <div class="tscroll">
+      <table>
+        <thead><tr><th scope="col">Período</th><th scope="col" class="num">IRR</th><th scope="col" class="num">Mín. dim.</th><th scope="col">Veredicto</th></tr></thead>
+        <tbody>
+        {% for ev in evaluaciones %}
+          <tr><td>{{ ev.periodo }}</td><td class="num">{{ ev.irr|floatformat:3 }}</td>
+            <td class="num">{{ ev.minimo_dimensional }}</td><td>{{ ev.veredicto }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="estado-vacio"><span class="ico-vacio">{% icono "layers" "ico-lg" %}</span>
+        <h3>Todavía no hay evaluaciones guardadas</h3>
+        <p>Abra un emprendimiento, pulse <b>Evaluar</b> en un período y luego <b>Guardar evaluación</b>.</p></div>
+    {% endif %}
+    <div class="formula">IRR = Π (D_i / 4)^w_i     con  Σ w_i = 1
+Umbral: califica como regenerativo solo si mín(D_i) ≥ 3</div>
+  </section>
+</div>
+{% endblock %}

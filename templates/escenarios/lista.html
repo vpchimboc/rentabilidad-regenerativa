@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block titulo %}Escenarios{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">Objetivo específico 4</p>
+  <h1>Escenarios simulados</h1>
+  <p class="lede">Seleccione un período para correr los escenarios optimista, esperado y
+  pesimista junto con el análisis de sensibilidad.</p>
+</section>
+
+<section class="tarjeta">
+  <h2>Períodos disponibles</h2>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Emprendimiento</th><th class="num">Año</th><th class="num">Mediciones</th><th></th></tr></thead>
+      <tbody>
+      {% for p in periodos %}
+        <tr>
+          <td>{{ p.emprendimiento.nombre }}</td>
+          <td class="num">{{ p.anio }}</td>
+          <td class="num">{{ p.mediciones.count }}</td>
+          <td><a class="boton sec" href="{% url 'escenario_simular' p.pk %}">Simular</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="nota">No hay períodos registrados.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="tarjeta">
+  <h2>Escenarios guardados</h2>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Período</th><th>Escenario</th><th class="num">Factor</th>
+        <th class="num">IRR</th><th class="num">Mín. dim.</th><th>Veredicto</th></tr></thead>
+      <tbody>
+      {% for e in escenarios %}
+        <tr>
+          <td>{{ e.periodo }}</td>
+          <td>{{ e.get_tipo_display }}</td>
+          <td class="num">{{ e.factor }}</td>
+          <td class="num">{{ e.irr|floatformat:4 }}</td>
+          <td class="num">{{ e.minimo_dimensional }}</td>
+          <td>{{ e.veredicto }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="nota">Todavía no se han guardado escenarios.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

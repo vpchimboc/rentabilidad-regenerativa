@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block titulo %}Resultados ronda {{ ronda.numero }}{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">Objetivo específico 5 · Ronda {{ ronda.numero }}</p>
+  <h1>Resultados de la validación</h1>
+  <p class="lede">{{ n_expertos }} expertos · {{ a.items|length }} ítems evaluados.</p>
+</section>
+
+<div class="rejilla">
+  <section class="tarjeta">
+    <p class="eyebrow">S-CVI / Ave</p>
+    <p class="cifra {% if a.s_cvi >= umbral_ivc %}l4{% else %}l1{% endif %}">{{ a.s_cvi }}</p>
+    <p class="nota">Validez de contenido global. Umbral: {{ umbral_ivc }}</p>
+  </section>
+  <section class="tarjeta">
+    <p class="eyebrow">W de Kendall</p>
+    <p class="cifra {% if a.kendall.w >= umbral_w %}l4{% else %}l1{% endif %}">{{ a.kendall.w }}</p>
+    <p class="nota">{{ a.interpretacion_w }} · umbral {{ umbral_w }}</p>
+  </section>
+  <section class="tarjeta">
+    <p class="eyebrow">Chi cuadrado</p>
+    <p class="cifra">{{ a.kendall.chi2 }}</p>
+    <p class="nota">gl = {{ a.kendall.gl }} · m = {{ a.kendall.m }} jueces · n = {{ a.kendall.n }} ítems</p>
+  </section>
+  <section class="tarjeta">
+    <p class="eyebrow">Consenso</p>
+    <p class="cifra {% if a.consenso %}l4{% else %}l2{% endif %}">{% if a.consenso %}Sí{% else %}No{% endif %}</p>
+    <p class="nota">{% if a.consenso %}Procede cerrar la ronda.{% else %}Se requiere una ronda adicional.{% endif %}</p>
+  </section>
+</div>
+
+{% if a.dispersion_baja %}
+<section class="tarjeta">
+  <h2>Nota metodológica sobre el W de Kendall</h2>
+  <p class="nota">{{ a.criterio_consenso }}. El W de Kendall mide concordancia en el
+  <em>ordenamiento</em> de los ítems: cuando los expertos coinciden en calificar casi todo con
+  el valor máximo, los rangos se convierten en empates y el coeficiente cae aunque el acuerdo
+  sea prácticamente total. Es el efecto techo de la escala Likert, y por eso el consenso se
+  declara aquí sobre la base del S-CVI y de la dispersión observada, dejando constancia del W.</p>
+</section>
+{% endif %}
+
+<section class="tarjeta">
+  <h2>IVC por ítem</h2>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Ítem</th><th>Criterio</th><th>Componente</th><th class="num">n</th>
+        <th class="num">Media</th><th class="num">σ</th><th class="num">Mín</th><th class="num">Máx</th>
+        <th class="num">IVC</th><th>Estado</th></tr></thead>
+      <tbody>
+      {% for f in a.items %}
+        <tr>
+          <td><code>{{ f.item.codigo }}</code></td>
+          <td class="nota">{{ f.item.get_criterio_display }}</td>
+          <td class="nota">{{ f.item.componente }}</td>
+          <td class="num">{{ f.n }}</td>
+          <td class="num">{{ f.media }}</td>
+          <td class="num">{{ f.desviacion }}</td>
+          <td class="num">{{ f.minimo }}</td>
+          <td class="num">{{ f.maximo }}</td>
+          <td class="num">{{ f.ivc }}</td>
+          <td>{% if f.aprobado %}<span class="pill l4">válido</span>
+              {% else %}<span class="pill l1">revisar</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if a.items_a_revisar %}
+    <p class="nota">Los ítems marcados como «revisar» no alcanzan el IVC mínimo y deben
+    reformularse antes de la siguiente ronda.</p>
+  {% endif %}
+</section>
+
+<section class="tarjeta">
+  <h2>Fórmulas aplicadas</h2>
+  <div class="formula">IVC(ítem) = (nº de expertos que califican 4 o 5) / (nº total de expertos)
+S-CVI/Ave = promedio de los IVC de todos los ítems
+
+W de Kendall (con corrección por empates):
+    W = 12·S / [ m²·(n³ − n) − m·ΣT ]
+    χ² = m·(n − 1)·W        gl = n − 1</div>
+  <p class="nota">m = número de jueces, n = número de ítems, S = suma de cuadrados de las
+  desviaciones de las sumas de rangos respecto de su media, T = corrección por empates.</p>
+</section>
+{% endblock %}

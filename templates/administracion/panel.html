@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load iconos %}
+{% block titulo %}Administración{% endblock %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Administración</span>{% endblock %}
+
+{% block contenido %}
+<div class="cabecera-pagina">
+  <div>
+    <p class="eyebrow">Administración</p>
+    <h1>Panel de administración</h1>
+    <p class="lede">Estado de las cuentas, los permisos, los datos importados y la integridad de la configuración.</p>
+  </div>
+  <div class="acciones">
+    <a class="boton sec" href="{% url 'adm_auditoria' %}">{% icono "history" "ico-sm" %}Auditoría</a>
+    <a class="boton" href="{% url 'adm_usuario_crear' %}">{% icono "plus" "ico-sm" %}Nuevo usuario</a>
+  </div>
+</div>
+
+<div class="kpis">
+  <a class="kpi" href="{% url 'adm_usuarios' %}" style="text-decoration:none;color:inherit">
+    <div class="kpi-cab"><span class="kpi-ico">{% icono "users" %}</span>Usuarios registrados</div>
+    <div class="kpi-valor">{{ usuarios.total }}</div>
+    <div class="kpi-periodo"><span class="etq exito">{% icono "check" %}{{ usuarios.activos }} activos</span>
+      <span class="etq neutro">{{ inactivos }} inactivos</span></div>
+  </a>
+  <a class="kpi" href="{% url 'adm_roles' %}" style="text-decoration:none;color:inherit">
+    <div class="kpi-cab"><span class="kpi-ico">{% icono "shield" %}</span>Roles configurados</div>
+    <div class="kpi-valor">{{ roles }}</div>
+    <div class="kpi-periodo">{{ permisos_asignados }} permisos asignados a roles</div>
+  </a>
+  <a class="kpi" href="{% url 'emprendimiento_lista' %}" style="text-decoration:none;color:inherit">
+    <div class="kpi-cab"><span class="kpi-ico">{% icono "building" %}</span>Emprendimientos</div>
+    <div class="kpi-valor">{{ emprendimientos }}</div>
+    <div class="kpi-periodo">Registrados en la base</div>
+  </a>
+  <div class="kpi">
+    <div class="kpi-cab"><span class="kpi-ico">{% icono "upload" %}</span>Importaciones de datos</div>
+    {% if ultima_importacion %}
+      <div class="kpi-valor" style="font-size:1.15rem">{{ ultima_importacion.fecha|date:"j M Y · H:i" }}</div>
+      <div class="kpi-periodo"><span class="etq {% if ultima_importacion.resultado == 'OK' %}exito{% else %}error{% endif %}">{% if ultima_importacion.resultado == 'OK' %}{% icono "check" %}Correcta{% else %}{% icono "circle-alert" %}Con error{% endif %}</span>
+        {{ importaciones }} en total</div>
+      <p class="kpi-ayuda">{{ ultima_importacion.objeto }}</p>
+    {% else %}
+      <div class="kpi-valor" style="font-size:1.15rem">Sin registro</div>
+      <p class="kpi-ayuda">Las importaciones con <code>importar_emprendimientos</code> quedan registradas aquí desde esta versión.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="split">
+  <section class="tarjeta" aria-labelledby="t-alertas">
+    <h2 id="t-alertas">{% icono "triangle-alert" %} Alertas de configuración e integridad</h2>
+    {% if alertas %}
+      <ul class="avisos">
+        {% for nivel, texto, ico in alertas %}
+          <li class="alerta {% if nivel == 'error' %}error{% elif nivel == 'warning' %}warning{% endif %}">
+            {% if nivel == 'error' %}{% icono "circle-alert" %}{% elif nivel == 'warning' %}{% icono "triangle-alert" %}{% else %}{% icono "info" %}{% endif %}
+            <span><span class="sr-only">{% if nivel == 'error' %}Crítico: {% elif nivel == 'warning' %}Advertencia: {% else %}Información: {% endif %}</span>{{ texto }}</span></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="estado-vacio"><span class="ico-vacio">{% icono "circle-check" "ico-lg" %}</span><h3>Sin alertas</h3><p>No se detectaron problemas de configuración ni de integridad.</p></div>
+    {% endif %}
+  </section>
+
+  <section class="tarjeta" aria-labelledby="t-act">
+    <div class="tarjeta-cab"><h2 id="t-act">{% icono "history" %} Últimas actividades</h2>
+      <a class="boton fantasma peq" href="{% url 'adm_auditoria' %}">Ver todo {% icono "chevron-right" "ico-sm" %}</a></div>
+    {% if actividad %}
+      <ul class="lista-actividad">
+        {% for a in actividad %}
+          <li>
+            <span class="etq {% if a.resultado == 'OK' %}info{% else %}error{% endif %}">{{ a.get_accion_display }}</span>
+            <span style="flex:1;min-width:0">{{ a.entidad }}{% if a.objeto %} · <b>{{ a.objeto|truncatechars:48 }}</b>{% endif %}<br>
+              <span class="nota">{{ a.usuario.username|default:"Sistema / anónimo" }}</span></span>
+            <span class="cuando">{{ a.fecha|date:"j M · H:i" }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="estado-vacio"><span class="ico-vacio">{% icono "history" "ico-lg" %}</span><h3>Sin actividad registrada</h3><p>Los inicios de sesión y los cambios administrativos aparecerán aquí.</p></div>
+    {% endif %}
+  </section>
+</div>
+
+<section class="tarjeta" aria-labelledby="t-fuentes">
+  <h2 id="t-fuentes">{% icono "database" %} Emprendimientos por origen de datos</h2>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th scope="col">Fuente</th><th scope="col" class="num">Emprendimientos</th></tr></thead>
+      <tbody>{% for f in fuentes %}<tr><td>{{ f.fuente|default:"Registro manual" }}</td><td class="num">{{ f.n }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

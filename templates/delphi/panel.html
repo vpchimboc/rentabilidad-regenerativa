@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block titulo %}Delphi{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">Objetivo específico 5</p>
+  <h1>Validación por método Delphi modificado</h1>
+  <p class="lede">Consulta estructurada a expertos en rondas sucesivas. El consenso se
+  determina con el Índice de Validez de Contenido (IVC ≥ {{ umbral_ivc }}) y el Coeficiente
+  de Concordancia W de Kendall (W ≥ {{ umbral_w }}).</p>
+</section>
+
+<div class="split">
+  <section class="tarjeta">
+    <h2>Rondas</h2>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th class="num">Ronda</th><th>Fecha</th><th>Estado</th>
+          <th class="num">Respuestas</th><th></th></tr></thead>
+        <tbody>
+        {% for r in rondas %}
+          <tr>
+            <td class="num">{{ r.numero }}</td>
+            <td>{{ r.fecha|date:"d/m/Y" }}</td>
+            <td>{{ r.get_estado_display }}</td>
+            <td class="num">{{ r.respuestas.count }}</td>
+            <td>
+              <a class="boton sec" href="{% url 'delphi_cuestionario' r.pk %}">Cuestionario</a>
+              <a class="boton sec" href="{% url 'delphi_resultado' r.pk %}">Resultados</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="nota">No hay rondas. Créelas desde el
+            <a href="/admin/delphi/ronda/add/">panel de administración</a>.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="tarjeta">
+    <h2>Panel de expertos</h2>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Experto</th><th>Grado</th><th>Institución</th>
+          <th class="num">Años</th><th class="num">Public.</th><th>Criterios</th></tr></thead>
+        <tbody>
+        {% for e in expertos %}
+          <tr>
+            <td>{{ e.nombre }}</td>
+            <td>{{ e.get_grado_display }}</td>
+            <td class="nota">{{ e.institucion }}</td>
+            <td class="num">{{ e.anios_experiencia }}</td>
+            <td class="num">{{ e.publicaciones }}</td>
+            <td>{% if e.cumple_criterios %}<span class="pill l4">cumple</span>
+                {% else %}<span class="pill l1">revisar</span>{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="nota">Sin expertos registrados.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<section class="tarjeta">
+  <h2>Cuestionario ({{ items.count }} ítems, escala Likert 1–5)</h2>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Código</th><th>Criterio</th><th>Componente evaluado</th><th>Enunciado</th></tr></thead>
+      <tbody>
+      {% for i in items %}
+        <tr>
+          <td><code>{{ i.codigo }}</code></td>
+          <td>{{ i.get_criterio_display }}</td>
+          <td>{{ i.componente }}</td>
+          <td class="nota">{{ i.enunciado }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load iconos %}
+{% block titulo %}Configuración{% endblock %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'adm_panel' %}">Administración</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Configuración</span>{% endblock %}
+
+{% block contenido %}
+<div class="cabecera-pagina">
+  <div>
+    <p class="eyebrow">Administración</p>
+    <h1>Configuración del sistema</h1>
+    <p class="lede">Última modificación: {{ config.actualizado|date:"j \d\e F \d\e Y · H:i" }}{% if config.actualizado_por %} por {{ config.actualizado_por.username }}{% endif %}.</p>
+  </div>
+</div>
+
+<div class="alerta warning">{% icono "triangle-alert" %}<span>Los parámetros tributarios son de <b>referencia</b> y no intervienen en
+  el cálculo del IRR ni del punto de equilibrio. Cada cambio queda en la auditoría con su valor anterior.
+  Los cortes y pesos del framework se editan en <a href="/admin/framework/indicador/">Indicadores</a> y
+  <a href="/admin/framework/dimension/">Dimensiones</a>.</span></div>
+
+<form method="post" class="tarjeta" novalidate>
+  {% csrf_token %}
+  {% for titulo, ico, campos in form.secciones %}
+    <div class="form-seccion">
+      <header><h2>{% icono ico %}{{ titulo }}</h2></header>
+      <div class="form-campos">{% for campo in campos %}{% include "componentes/campo.html" %}{% endfor %}</div>
+    </div>
+  {% endfor %}
+  <div class="form-seccion">
+    <header><h2>{% icono "upload" %}Gestión de datos e importaciones</h2></header>
+    <div class="nota" style="display:flex;flex-direction:column;gap:8px">
+      <p>Las importaciones se ejecutan desde la terminal para conservar trazabilidad y respaldo:</p>
+      <div class="formula">manage.py preparar_dataset_publico --companias … --ranking … --blab …
+manage.py importar_emprendimientos</div>
+      <p>Cada importación queda registrada en la <a href="{% url 'adm_auditoria' %}?accion=IMPORTAR">auditoría</a>. Respalde <code>db.sqlite3</code> antes de importar.</p>
+    </div>
+  </div>
+  <div class="form-seccion">
+    <header><h2>{% icono "history" %}Auditoría y registros de actividad</h2></header>
+    <p class="nota">Se registran inicios y cierres de sesión, accesos denegados, cambios de usuarios, roles, permisos, configuración,
+      emprendimientos, períodos, dimensiones e indicadores. No se guardan contraseñas ni tokens.
+      <a href="{% url 'adm_auditoria' %}">Consultar el registro</a>.</p>
+  </div>
+  <div class="form-acciones">
+    <a class="boton sec" href="{% url 'adm_panel' %}">Cancelar</a>
+    <button class="boton" type="submit">{% icono "check" "ico-sm" %}Guardar configuración</button>
+  </div>
+</form>
+{% endblock %}

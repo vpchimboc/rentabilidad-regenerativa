@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block titulo %}Escenarios {{ periodo }}{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">Objetivo específico 4</p>
+  <h1>Simulación de escenarios · {{ periodo }}</h1>
+  <p class="lede">Los factores se aplican respetando la dirección de cada indicador: en un
+  indicador de «menor es mejor» (residuos, consumo energético) el escenario optimista reduce
+  el valor en lugar de aumentarlo.</p>
+</section>
+
+<section class="tarjeta">
+  <form method="post" class="linea">{% csrf_token %}
+    <div><label for="f_OPT">Factor optimista</label>
+      <input id="f_OPT" type="number" step="0.01" name="factor_OPT" value="{{ factores.OPT }}"></div>
+    <div><label for="f_ESP">Factor esperado</label>
+      <input id="f_ESP" type="number" step="0.01" name="factor_ESP" value="{{ factores.ESP }}"></div>
+    <div><label for="f_PES">Factor pesimista</label>
+      <input id="f_PES" type="number" step="0.01" name="factor_PES" value="{{ factores.PES }}"></div>
+    <div><label for="delta">Sensibilidad ±%</label>
+      <input id="delta" type="number" step="1" name="delta" value="{{ delta_pct }}"></div>
+    <button class="boton" type="submit">Recalcular</button>
+    <button class="boton sec" type="submit" name="guardar" value="1">Recalcular y guardar</button>
+  </form>
+</section>
+
+<div class="rejilla">
+{% for r in resultados %}
+  <section class="tarjeta">
+    <p class="eyebrow">
+      {% if r.tipo == 'OPT' %}Escenario optimista{% elif r.tipo == 'ESP' %}Escenario esperado{% else %}Escenario pesimista{% endif %}
+    </p>
+    <p class="cifra {{ r.resultado.clase }}">{{ r.resultado.irr|floatformat:4 }}</p>
+    <p class="nota">factor {{ r.factor }}</p>
+    <p><span class="pill {{ r.resultado.clase }}">{{ r.resultado.veredicto }}</span></p>
+    <div class="kv"><span>Mínimo dimensional</span><span>{{ r.resultado.minimo_dimensional }}</span></div>
+    {% for d in r.resultado.dimensiones %}
+      <div class="kv"><span>{{ d.dimension.codigo }} · {{ d.dimension.nombre }}</span><span>{{ d.nivel }}</span></div>
+    {% endfor %}
+  </section>
+{% endfor %}
+</div>
+
+<section class="tarjeta">
+  <h2>Análisis de sensibilidad (±{{ delta_pct }} %)</h2>
+  <p class="nota">Amplitud del IRR al mover todos los indicadores de una dimensión. Mide qué
+  variables gobiernan el comportamiento del framework. IRR base: {{ base.irr|floatformat:4 }}.</p>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Dimensión</th><th class="num">IRR −{{ delta_pct }}%</th><th class="num">IRR base</th>
+        <th class="num">IRR +{{ delta_pct }}%</th><th class="num">Amplitud</th></tr></thead>
+      <tbody>
+      {% for f in sensibilidad %}
+        <tr>
+          <td>{{ f.dimension.codigo }} · {{ f.dimension.nombre }}</td>
+          <td class="num">{{ f.irr_menos|floatformat:4 }}</td>
+          <td class="num">{{ f.irr_base|floatformat:4 }}</td>
+          <td class="num">{{ f.irr_mas|floatformat:4 }}</td>
+          <td class="num">{{ f.amplitud|floatformat:4 }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block titulo %}Evaluación {{ periodo }}{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">Fase 3 · Cálculo del índice</p>
+  <h1>{{ periodo.emprendimiento.nombre }} · {{ periodo.anio }}</h1>
+</section>
+
+<div class="split">
+  <section class="tarjeta">
+    <p class="eyebrow">Índice de Rentabilidad Regenerativa</p>
+    <p class="cifra {{ r.clase }}">{{ r.irr|floatformat:4 }}</p>
+    <p><span class="pill {{ r.clase }}">{{ r.veredicto }}</span></p>
+    <div class="kv"><span>Mínimo dimensional</span><span>{{ r.minimo_dimensional }}</span></div>
+    <div class="kv"><span>Cuello de botella</span><span>{{ r.cuello_de_botella }}</span></div>
+    <div class="kv"><span>Media aritmética ponderada</span><span>{{ r.media_aritmetica|floatformat:4 }}</span></div>
+    <div class="kv"><span>Penalización geométrica</span><span>{{ r.penalizacion|floatformat:4 }}</span></div>
+    <form method="post" style="margin-top:8px">{% csrf_token %}
+      <button class="boton" type="submit">Guardar evaluación</button>
+      <a class="boton sec" href="{% url 'escenario_simular' periodo.pk %}">Simular escenarios</a>
+    </form>
+  </section>
+
+  <section class="tarjeta">
+    <p class="eyebrow">Fase 4 · Elasticidad</p>
+    <h2>¿Dónde conviene intervenir primero?</h2>
+    <p class="nota">Ganancia de IRR al subir un nivel completo cada dimensión.</p>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Dimensión</th><th class="num">Nivel actual</th><th class="num">Objetivo</th><th class="num">Δ IRR</th></tr></thead>
+        <tbody>
+        {% for e in elasticidades %}
+          <tr>
+            <td>{{ e.dimension.codigo }} · {{ e.dimension.nombre }}{% if e.es_cuello %} <span class="pill l2">cuello</span>{% endif %}</td>
+            <td class="num">{{ e.nivel_actual }}</td>
+            <td class="num">{{ e.nivel_objetivo }}</td>
+            <td class="num">{% if e.ganancia is None %}{% if e.nivel_actual is None %}sin dato{% else %}máximo{% endif %}{% else %}+{{ e.ganancia|floatformat:4 }}{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if rna %}
+      <p class="eyebrow" style="margin-top:10px">Contraste con la RNA</p>
+      <div class="kv"><span>Predicción del MLP</span><span>{{ rna.prediccion|floatformat:4 }}</span></div>
+      <div class="kv"><span>Cálculo analítico</span><span>{{ rna.analitico|floatformat:4 }}</span></div>
+      <div class="kv"><span>Error</span><span>{{ rna.error|floatformat:4 }}</span></div>
+    {% else %}
+      <p class="nota">Aún no hay un modelo de RNA entrenado. <a href="/rna/">Entrenar ahora</a>.</p>
+    {% endif %}
+  </section>
+</div>
+
+{% for d in r.dimensiones %}
+<section class="tarjeta">
+  <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+    <h2>{{ d.dimension.codigo }} · {{ d.dimension.nombre }}</h2>
+    {% if d.sin_dato %}
+    <span class="nota">sin mediciones · no entra en el índice · <span class="pill vacio">sin dato</span></span>
+    {% else %}
+    <span class="nota">peso {{ d.peso }} · nivel {{ d.nivel }} ·
+      <span class="pill l{{ d.nivel_discreto }}">{{ d.etiqueta }}</span> · aporte {{ d.aporte }}</span>
+    {% endif %}
+  </div>
+  <div class="barra"><span class="bg{{ d.nivel_discreto }}" style="width:{% widthratio d.nivel 4 100 %}%"></span></div>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Indicador</th><th class="num">Valor</th><th>Unidad</th><th class="num">Nivel</th><th>Lectura</th></tr></thead>
+      <tbody>
+      {% for f in d.filas %}
+        <tr>
+          <td>{{ f.indicador.nombre }} <span class="nota">({{ f.indicador.codigo }})</span></td>
+          <td class="num">{% if f.valor is None %}—{% else %}{{ f.valor|floatformat:2 }}{% endif %}</td>
+          <td>{{ f.indicador.unidad }}</td>
+          <td class="num">{% if f.nivel is None %}—{% else %}{{ f.nivel }}{% endif %}</td>
+          <td>{% if f.etiqueta %}<span class="pill l{{ f.nivel_discreto }}">{{ f.etiqueta }}</span>{% else %}<span class="nota">sin dato</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

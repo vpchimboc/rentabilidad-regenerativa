@@ -1,0 +1,104 @@
+{% load static iconos %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}FRR{% endblock %} · Framework de Rentabilidad Regenerativa</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230f4c5c%27/%3E%3Cpath d=%27M7 23l6-7 5 4 7-9%27 fill=%27none%27 stroke=%27white%27 stroke-width=%273%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="{% static 'css/frr.css' %}">
+  <script src="{% static 'js/frr.js' %}" defer></script>
+</head>
+<body>
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+    <a class="sidebar-marca" href="/">
+      <span class="logo" aria-hidden="true">FRR</span>
+      <span><b>Rentabilidad Regenerativa</b><small>Evaluación de emprendimientos</small></span>
+    </a>
+    <nav class="nav">
+      {% for grupo in nav_grupos %}
+        <div class="nav-grupo">
+          <h2>{{ grupo.titulo }}</h2>
+          <ul>
+            {% for item in grupo.items %}
+              <li><a class="nav-item" href="{{ item.url }}"{% if item.activo %} aria-current="page"{% endif %}>
+                {% icono item.icono %}<span>{{ item.titulo }}</span></a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
+    </nav>
+    <div class="sidebar-pie">Universidad Católica de Cuenca · Ingeniería Industrial</div>
+  </aside>
+  <div class="velo" data-cerrar-menu></div>
+
+  <div class="principal">
+    <header class="topbar">
+      <div class="topbar-in">
+        <button class="boton sec icono-solo boton-menu" type="button" aria-controls="sidebar"
+                aria-expanded="false" data-alternar-menu>{% icono "menu" "" "Abrir menú" %}</button>
+        <nav class="migas" aria-label="Ruta de navegación">
+          <a href="/">Inicio</a>
+          {% block migas %}{% endblock %}
+        </nav>
+        <form class="buscador" role="search" action="{% url 'emprendimiento_lista' %}" method="get">
+          {% icono "search" "ico-sm" %}
+          <label class="sr-only" for="busqueda-global">Buscar emprendimientos</label>
+          <input id="busqueda-global" type="search" name="q" placeholder="Buscar emprendimiento o RUC"
+                 value="{{ request.GET.q|default:'' }}">
+        </form>
+        <span class="fecha-top">{% icono "calendar" "ico-sm" %}{{ hoy|date:"j \d\e F \d\e Y" }}</span>
+        {% if user.is_authenticated %}
+          <details class="menu-usuario">
+            <summary aria-label="Menú de la cuenta">
+              <span class="avatar" aria-hidden="true">{{ user.get_username|slice:":1"|upper }}</span>
+              <span class="nombre-usuario">{{ user.get_full_name|default:user.get_username }}</span>
+            </summary>
+            <div class="desplegable">
+              <div class="cabecera"><b>{{ user.get_full_name|default:user.get_username }}</b>{{ user.email|default:"Sin correo registrado" }}</div>
+              {% if user.is_staff %}<a href="{% url 'admin:password_change' %}">{% icono "shield" "ico-sm" %}Cambiar contraseña</a>{% endif %}
+              <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+                <button type="submit">{% icono "log-out" "ico-sm" %}Cerrar sesión</button>
+              </form>
+            </div>
+          </details>
+        {% else %}
+          <a class="boton sec peq" href="{% url 'login' %}?next={{ request.path|urlencode }}">{% icono "log-in" "ico-sm" %}Ingresar</a>
+        {% endif %}
+      </div>
+    </header>
+
+    <main class="wrap" id="contenido" tabindex="-1">
+      {% if messages %}
+        <ul class="avisos" role="status">
+          {% for m in messages %}
+            <li class="aviso {{ m.tags }}">
+              {% if m.tags == "success" %}{% icono "circle-check" %}{% elif m.tags == "error" %}{% icono "circle-alert" %}{% elif m.tags == "warning" %}{% icono "triangle-alert" %}{% else %}{% icono "info" %}{% endif %}
+              <span>{{ m }}</span></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      {% block contenido %}{% endblock %}
+    </main>
+
+    <footer class="pie">
+      <span>Norma Liliana Pañi Ochoa · Ingeniería Industrial · Universidad Católica de Cuenca</span>
+      <span>Tutor: Ing. Santiago Moscoso Bernal, PhD.</span>
+    </footer>
+  </div>
+</div>
+
+<dialog class="modal" id="modal-confirmar" aria-labelledby="modal-titulo">
+  <div class="modal-cuerpo">
+    <span class="icono-modal">{% icono "triangle-alert" "ico-lg" %}</span>
+    <h2 id="modal-titulo">¿Confirmar la acción?</h2>
+    <p class="nota" id="modal-texto"></p>
+  </div>
+  <div class="modal-pie">
+    <button class="boton sec" type="button" data-modal-cancelar>Cancelar</button>
+    <button class="boton peligro" type="button" data-modal-aceptar>Confirmar</button>
+  </div>
+</dialog>
+</body>
+</html>

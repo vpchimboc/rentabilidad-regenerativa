@@ -1,0 +1,243 @@
+/* Tema del panel de Django (/admin/) con la identidad visual del sistema FRR.
+   Solo redefine las variables y algunos componentes del admin; no cambia su HTML. */
+
+:root,
+html[data-theme="light"] {
+  --primary: #0f4c5c;
+  --secondary: #0a3742;
+  --accent: #ffffff;
+  --primary-fg: #ffffff;
+
+  --body-fg: #17212b;
+  --body-bg: #ffffff;
+  --body-quiet-color: #4b5866;
+  --body-medium-color: #33404c;
+  --body-loud-color: #0b141c;
+
+  --header-color: #d6e4e8;
+  --header-branding-color: #ffffff;
+  --header-bg: #0a3742;
+  --header-link-color: #ffffff;
+
+  --breadcrumbs-fg: #4b5866;
+  --breadcrumbs-link-fg: #0f4c5c;
+  --breadcrumbs-bg: #f3f5f7;
+
+  --link-fg: #0f4c5c;
+  --link-hover-color: #0a3742;
+  --link-selected-fg: #0a3742;
+
+  --hairline-color: #e6ebef;
+  --border-color: #c3ccd5;
+
+  --error-fg: #b42318;
+  --message-info-bg: #e8f1f8;
+  --message-success-bg: #e7f4ed;
+  --message-warning-bg: #fdf3e1;
+  --message-error-bg: #fdecea;
+
+  --darkened-bg: #f7f9fa;
+  --selected-bg: #e6f0f2;
+  --selected-row: #eef6f7;
+
+  --button-fg: #ffffff;
+  --button-bg: #0f4c5c;
+  --button-hover-bg: #0a3742;
+  --default-button-bg: #0a3742;
+  --default-button-hover-bg: #0f4c5c;
+  --close-button-bg: #5b6573;
+  --close-button-hover-bg: #33404c;
+  --delete-button-bg: #b42318;
+  --delete-button-hover-bg: #912018;
+
+  --object-tools-fg: #ffffff;
+  --object-tools-bg: #0f4c5c;
+  --object-tools-hover-bg: #0a3742;
+
+  --font-family-primary: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-family-monospace: "Cascadia Mono", "IBM Plex Mono", ui-monospace, Consolas, monospace;
+
+  --frr-fondo: #f3f5f7;
+  --frr-sombra: 0 1px 2px rgba(16, 24, 40, .05);
+  --frr-foco: 0 0 0 3px rgba(15, 76, 92, .35);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    --primary: #6fb3c4;
+    --secondary: #0a3742;
+    --accent: #ffffff;
+    --primary-fg: #ffffff;
+    --body-fg: #e5ecef;
+    --body-bg: #121a20;
+    --body-quiet-color: #a6b4bd;
+    --body-medium-color: #c9d4da;
+    --body-loud-color: #ffffff;
+    --header-bg: #07262e;
+    --breadcrumbs-fg: #a6b4bd;
+    --breadcrumbs-link-fg: #8ccbdb;
+    --breadcrumbs-bg: #18232b;
+    --link-fg: #8ccbdb;
+    --link-hover-color: #b7e0ea;
+    --link-selected-fg: #b7e0ea;
+    --hairline-color: #26333c;
+    --border-color: #3a4954;
+    --error-fg: #f08a80;
+    --message-info-bg: #16324a;
+    --message-success-bg: #133a29;
+    --message-warning-bg: #3d2d0c;
+    --message-error-bg: #4a1a16;
+    --darkened-bg: #18232b;
+    --selected-bg: #1d3a42;
+    --selected-row: #17313a;
+    --button-bg: #1b6a7c;
+    --button-hover-bg: #23849a;
+    --default-button-bg: #23849a;
+    --default-button-hover-bg: #1b6a7c;
+    --object-tools-bg: #1b6a7c;
+    --object-tools-hover-bg: #23849a;
+    --frr-fondo: #0d1418;
+  }
+}
+
+html[data-theme="dark"] {
+  --primary: #6fb3c4;
+  --secondary: #0a3742;
+  --body-fg: #e5ecef;
+  --body-bg: #121a20;
+  --body-quiet-color: #a6b4bd;
+  --body-medium-color: #c9d4da;
+  --body-loud-color: #ffffff;
+  --header-bg: #07262e;
+  --breadcrumbs-fg: #a6b4bd;
+  --breadcrumbs-link-fg: #8ccbdb;
+  --breadcrumbs-bg: #18232b;
+  --link-fg: #8ccbdb;
+  --link-hover-color: #b7e0ea;
+  --link-selected-fg: #b7e0ea;
+  --hairline-color: #26333c;
+  --border-color: #3a4954;
+  --error-fg: #f08a80;
+  --message-info-bg: #16324a;
+  --message-success-bg: #133a29;
+  --message-warning-bg: #3d2d0c;
+  --message-error-bg: #4a1a16;
+  --darkened-bg: #18232b;
+  --selected-bg: #1d3a42;
+  --selected-row: #17313a;
+  --button-bg: #1b6a7c;
+  --button-hover-bg: #23849a;
+  --default-button-bg: #23849a;
+  --default-button-hover-bg: #1b6a7c;
+  --object-tools-bg: #1b6a7c;
+  --object-tools-hover-bg: #23849a;
+  --frr-fondo: #0d1418;
+}
+
+/* --- Estructura -------------------------------------------------------------- */
+body { font-size: 0.9375rem; }
+#container { background: var(--frr-fondo); }
+#header {
+  min-height: 60px;
+  padding: 10px 24px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .06);
+}
+#site-name a { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; }
+.frr-logo {
+  display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 9px;
+  background: rgba(255, 255, 255, .12); font: 700 .75rem/1 var(--font-family-monospace); letter-spacing: .04em;
+}
+.frr-subtitulo { display: block; font-size: .72rem; font-weight: 400; color: #9fbac2; }
+#user-tools { font-size: .78rem; letter-spacing: .02em; text-transform: none; }
+#user-tools a { border-bottom: 0; }
+#user-tools a:hover { text-decoration: underline; color: #fff; }
+.frr-volver {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; margin-right: 6px;
+  border: 1px solid rgba(255, 255, 255, .35); border-radius: 6px;
+}
+
+div.breadcrumbs {
+  padding: 10px 24px; border-bottom: 1px solid var(--hairline-color);
+  font-size: .8125rem;
+}
+div.breadcrumbs a { color: var(--breadcrumbs-link-fg); }
+
+#content { padding: 24px; }
+#content h1 { font-weight: 700; letter-spacing: -.01em; color: var(--body-loud-color); }
+
+/* --- Barra lateral de navegación del admin ------------------------------------ */
+#nav-sidebar { background: var(--body-bg); border-right: 1px solid var(--hairline-color); }
+#nav-sidebar .module th, #nav-sidebar .module caption { font-weight: 600; }
+#nav-sidebar .current-app .section:link,
+#nav-sidebar .current-app .section:visited { color: var(--link-fg); font-weight: 700; }
+#nav-sidebar .current-model { background: var(--selected-row); }
+.toggle-nav-sidebar { background: var(--body-bg); border-color: var(--hairline-color); color: var(--link-fg); }
+
+/* --- Módulos, tablas y tarjetas ------------------------------------------------- */
+.module {
+  background: var(--body-bg); border: 1px solid var(--hairline-color);
+  border-radius: 10px; box-shadow: var(--frr-sombra); overflow: hidden;
+}
+.module h2, .module caption, .inline-group h2 {
+  background: var(--primary); color: #fff; font-weight: 600;
+  font-size: .8125rem; letter-spacing: .03em; padding: 10px 12px;
+}
+.module h2 a, .module caption a.section { color: #fff; }
+#changelist .results, .results { border-radius: 10px; overflow-x: auto; }
+thead th, tfoot td {
+  background: var(--darkened-bg); color: var(--body-quiet-color);
+  font-weight: 600; letter-spacing: .03em; border-bottom: 1px solid var(--hairline-color);
+}
+thead th a:link, thead th a:visited { color: var(--body-quiet-color); }
+#result_list tbody tr:hover { background: var(--selected-row); }
+td, th { border-bottom-color: var(--hairline-color); }
+
+#changelist-filter {
+  background: var(--body-bg); border: 1px solid var(--hairline-color); border-radius: 10px;
+  box-shadow: var(--frr-sombra); overflow: hidden;
+}
+#changelist-filter h2 { background: var(--primary); color: #fff; }
+#changelist-filter li.selected a { color: var(--link-fg); font-weight: 600; }
+#changelist #toolbar { background: transparent; border: 0; padding: 0 0 12px; }
+
+/* --- Botones -------------------------------------------------------------------- */
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+  border-radius: 6px; font-weight: 600; padding: 9px 15px;
+  transition: background-color .15s ease, box-shadow .15s ease;
+}
+.button:focus-visible, input[type=submit]:focus-visible, a.button:focus-visible,
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none; box-shadow: var(--frr-foco);
+}
+.submit-row {
+  background: var(--darkened-bg); border: 1px solid var(--hairline-color); border-radius: 10px;
+}
+.submit-row a.deletelink { border-radius: 6px; }
+.object-tools a:link, .object-tools a:visited {
+  border-radius: 999px; padding: 6px 14px; font-weight: 600; letter-spacing: .02em;
+}
+/* Los enlaces con icono (añadir, ver en el sitio) necesitan su espacio a la derecha. */
+.object-tools a.addlink, .object-tools a.viewsitelink { padding-right: 30px; background-position: right 10px center; }
+
+/* --- Formularios --------------------------------------------------------------- */
+input[type=text], input[type=password], input[type=email], input[type=url], input[type=number],
+input[type=tel], input[type=search], textarea, select, .vTextField {
+  border: 1px solid var(--border-color); border-radius: 6px; padding: 7px 10px;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+fieldset.module { margin-bottom: 20px; }
+.form-row { border-bottom-color: var(--hairline-color); }
+.errornote { border-radius: 8px; }
+.errorlist li { border-radius: 6px; }
+
+/* --- Mensajes ------------------------------------------------------------------- */
+ul.messagelist li { border-radius: 8px; margin: 0 24px 10px; }
+
+/* --- Inicio de sesión ----------------------------------------------------------- */
+.login #container {
+  border-radius: 14px; overflow: hidden; border: 0;
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, .3);
+}
+body.login {
+  background: linear-gradient(160deg, #0a3742 0%, #0f4c5c 55%, #1b6a7c 100%);
+}

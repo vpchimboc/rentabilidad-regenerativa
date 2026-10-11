@@ -95,8 +95,28 @@ fi
 manage() { sudo -H -u "$USUARIO" bash -c "set -a; source '${ENV_FILE}'; set +a; cd '${PROYECTO}'; '${VENV}/bin/python' manage.py $*"; }
 manage migrate --noinput
 manage collectstatic --noinput
-if [[ "$(manage shell -c "'from framework.models import Dimension; print(Dimension.objects.count())'" | tail -1)" == "0" ]]; then
-  manage cargar_framework
+contar() { manage shell -c "'$1'" 2>/dev/null | tail -1; }
+
+# Primera instalación: todos los datos salen del repositorio (la base no se versiona).
+if [[ "$(contar 'from framework.models import Dimension; print(Dimension.objects.count())')" == "0" ]]; then
+  verde "Base vacía: cargando datos desde el repositorio"
+  manage cargar_framework                 # dimensiones, variables, 17 indicadores, cuestionario Delphi
+  manage cargar_demo                      # 3 casos ilustrativos, expertos, rondas Delphi, bibliometría, PRISMA
+  manage importar_emprendimientos         # 120 emprendimientos de fuentes públicas (CSV del repositorio)
+  manage entrenar_rna                     # red neuronal entrenada y activa
+else
+  echo "La base ya tiene datos: no se recargan."
+fi
+
+# Administrador inicial si todavía no existe ninguno.
+CREDENCIAL="/root/rentabilidad-admin.txt"
+if [[ "$(contar 'from django.contrib.auth.models import User; print(User.objects.filter(is_superuser=True).count())')" == "0" ]]; then
+  CLAVE_ADMIN="$("${VENV}/bin/python" -c 'import secrets; print(secrets.token_urlsafe(14))')"
+  sudo -H -u "$USUARIO" bash -c "set -a; source '${ENV_FILE}'; set +a; cd '${PROYECTO}'; \
+    DJANGO_SUPERUSER_USERNAME=admin DJANGO_SUPERUSER_EMAIL='${CORREO}' DJANGO_SUPERUSER_PASSWORD='${CLAVE_ADMIN}' \
+    '${VENV}/bin/python' manage.py createsuperuser --noinput"
+  ( umask 077; printf 'URL: https://%s/cuenta/ingresar/\nUsuario: admin\nContraseña: %s\n' "$DOMINIO" "$CLAVE_ADMIN" > "$CREDENCIAL" )
+  echo "Administrador creado. Credenciales guardadas en ${CREDENCIAL} (solo root puede leerlo)."
 fi
 manage check --deploy || aviso "Revise las advertencias de 'check --deploy' indicadas arriba."
 
@@ -207,6 +227,7 @@ cat <<EOF
  - Servicio:      systemctl status ${SERVICIO}
  - Registros:     journalctl -u ${SERVICIO} -f
  - Certificado:   se renueva solo (certbot.timer); prueba: certbot renew --dry-run
- - Crear admin:   cd ${PROYECTO} && sudo -H -u ${USUARIO} bash -c 'set -a; . ./.env; set +a; .venv/bin/python manage.py createsuperuser'
+ - Acceso admin:  sudo cat ${CREDENCIAL}   (cambie la contraseña al ingresar)
+ - Otro admin:    cd ${PROYECTO} && sudo -H -u ${USUARIO} bash -c 'set -a; . ./.env; set +a; .venv/bin/python manage.py createsuperuser'
 =====================================================================
 EOF

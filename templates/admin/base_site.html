@@ -1,11 +1,76 @@
 {% extends "admin/base.html" %}
-{% load static %}
+{% load static i18n iconos %}
 
 {% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
 
 {% block extrastyle %}{{ block.super }}
 <link rel="stylesheet" href="{% static 'css/admin-frr.css' %}">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230f4c5c%27/%3E%3Cpath d=%27M7 23l6-7 5 4 7-9%27 fill=%27none%27 stroke=%27white%27 stroke-width=%273%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+<script src="{% static 'js/admin-frr.js' %}" defer></script>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }}{% if has_permission and not is_popup %} frr-layout{% endif %}{% endblock %}
+
+{% block header %}
+{% if has_permission and not is_popup %}
+  {# Barra lateral: misma estructura que la aplicación #}
+  <aside class="frr-sidebar" id="frr-sidebar" aria-label="Navegación principal">
+    <a class="frr-marca" href="/">
+      <span class="frr-logo" aria-hidden="true">FRR</span>
+      <span><b>Rentabilidad Regenerativa</b><small>Evaluación de emprendimientos</small></span>
+    </a>
+    <nav class="frr-nav">
+      {% for grupo in nav_grupos %}
+        <div class="frr-nav-grupo">
+          <h2>{{ grupo.titulo }}</h2>
+          <ul>{% for item in grupo.items %}
+            <li><a class="frr-nav-item" href="{{ item.url }}">{% icono item.icono %}<span>{{ item.titulo }}</span></a></li>
+          {% endfor %}</ul>
+        </div>
+      {% endfor %}
+      <div class="frr-nav-grupo">
+        <h2>Editor de datos</h2>
+        <ul>
+          <li><a class="frr-nav-item" href="{% url 'admin:index' %}"{% if request.path == "/admin/" %} aria-current="page"{% endif %}>{% icono "database" %}<span>Inicio del editor</span></a></li>
+        </ul>
+      </div>
+      {% for app in available_apps %}
+        <div class="frr-nav-grupo">
+          <h2>{{ app.name }}</h2>
+          <ul>{% for model in app.models %}{% if model.admin_url %}
+            <li><a class="frr-nav-item" href="{{ model.admin_url }}"{% if model.admin_url in request.path %} aria-current="page"{% endif %}>{% icono "chevron-right" "ico-sm" %}<span>{{ model.name }}</span></a></li>
+          {% endif %}{% endfor %}</ul>
+        </div>
+      {% endfor %}
+    </nav>
+    <div class="frr-sidebar-pie">Universidad Católica de Cuenca · Ingeniería Industrial</div>
+  </aside>
+  <div class="frr-velo" data-frr-cerrar></div>
+
+  {# Barra superior #}
+  <header id="header" class="frr-topbar">
+    <button class="frr-boton-menu" type="button" aria-controls="frr-sidebar" aria-expanded="false" data-frr-menu>{% icono "menu" "" "Abrir menú" %}</button>
+    <nav class="frr-migas" aria-label="{% translate 'Breadcrumbs' %}">
+      {% block breadcrumbs %}
+        <ol class="breadcrumbs">
+          <li><a href="{% url 'admin:index' %}">{% translate 'Home' %}</a></li>
+          {% if title %}<li aria-current="page">{{ title }}</li>{% endif %}
+        </ol>
+      {% endblock %}
+    </nav>
+    <div class="frr-usuario">
+      <a class="frr-boton-sec" href="/" aria-label="Volver al sistema">{% icono "layout-dashboard" "ico-sm" %}<span class="frr-texto">Volver al sistema</span></a>
+      {% if user.has_usable_password %}<a class="frr-enlace" href="{% url 'admin:password_change' %}" aria-label="Cambiar contraseña">{% icono "shield" "ico-sm" %}<span class="frr-texto">Contraseña</span></a>{% endif %}
+      <span class="frr-avatar" title="{% firstof user.get_full_name user.get_username %}">{{ user.get_username|slice:":1"|upper }}</span>
+      <form id="logout-form" method="post" action="{% url 'admin:logout' %}">{% csrf_token %}
+        <button type="submit" class="frr-enlace" aria-label="Cerrar sesión">{% icono "log-out" "ico-sm" %}<span class="frr-texto">Salir</span></button>
+      </form>
+      {% include "admin/color_theme_toggle.html" %}
+    </div>
+  </header>
+{% else %}
+  {{ block.super }}
+{% endif %}
 {% endblock %}
 
 {% block branding %}
@@ -20,9 +85,8 @@
 {% endif %}
 {% endblock %}
 
-{% block userlinks %}
-  <a class="frr-volver" href="/">← Volver al sistema</a>
-  {{ block.super }}
-{% endblock %}
+{# Con la estructura FRR la ruta va en la barra superior y la barra lateral de Django sobra. #}
+{% block nav-breadcrumbs %}{% if not has_permission or is_popup %}{{ block.super }}{% endif %}{% endblock %}
+{% block nav-sidebar %}{% if not has_permission or is_popup %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block nav-global %}{% endblock %}

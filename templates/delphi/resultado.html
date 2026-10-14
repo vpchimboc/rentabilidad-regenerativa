@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% block titulo %}Resultados ronda {{ ronda.numero }}{% endblock %}
+{% load iconos %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'delphi_panel' %}">Validación Delphi</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Resultados ronda {{ ronda.numero }}</span>{% endblock %}
 
 {% block contenido %}
 <section>

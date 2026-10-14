@@ -1,12 +1,18 @@
 from django.contrib import admin
 
-from emprendimientos.models import Emprendimiento, Evaluacion, Medicion, Periodo
+from emprendimientos.models import Emprendimiento, Evaluacion, Medicion, Periodo, VerificacionSalvaguarda
 
 
 class MedicionInline(admin.TabularInline):
     model = Medicion
     extra = 0
     autocomplete_fields = ["indicador"]
+    fields = ("indicador", "estado", "valor", "numerador", "denominador", "fuente", "fecha_medicion", "responsable", "observaciones")
+
+
+class SalvaguardaInline(admin.TabularInline):
+    model = VerificacionSalvaguarda
+    extra = 0
 
 
 class PeriodoInline(admin.TabularInline):
@@ -27,7 +33,7 @@ class EmprendimientoAdmin(admin.ModelAdmin):
 class PeriodoAdmin(admin.ModelAdmin):
     list_display = ("emprendimiento", "anio", "ventas", "punto_equilibrio", "margen_sobre_break_even")
     list_filter = ("anio", "emprendimiento")
-    inlines = [MedicionInline]
+    inlines = [MedicionInline, SalvaguardaInline]
 
     @admin.display(description="Punto de equilibrio (USD)")
     def punto_equilibrio(self, obj):
@@ -40,12 +46,23 @@ class PeriodoAdmin(admin.ModelAdmin):
 
 @admin.register(Medicion)
 class MedicionAdmin(admin.ModelAdmin):
-    list_display = ("periodo", "indicador", "valor", "nivel")
-    list_filter = ("indicador__variable__dimension", "periodo__emprendimiento")
+    list_display = ("periodo", "indicador", "estado", "valor", "puntuacion_z", "fuente")
+    list_filter = ("estado", "indicador__variable__dimension", "periodo__emprendimiento")
+
+    @admin.display(description="z")
+    def puntuacion_z(self, obj):
+        z = obj.z
+        return "—" if z is None else f"{z:.3f}"
 
 
 @admin.register(Evaluacion)
 class EvaluacionAdmin(admin.ModelAdmin):
-    list_display = ("periodo", "irr", "minimo_dimensional", "veredicto", "cuello_de_botella", "creado")
-    list_filter = ("veredicto", "periodo__emprendimiento")
+    list_display = ("periodo", "clasificacion", "veredicto", "irr", "elegibilidad", "version", "creado")
+    list_filter = ("clasificacion", "version", "periodo__emprendimiento")
     readonly_fields = ("detalle",)
+
+
+@admin.register(VerificacionSalvaguarda)
+class VerificacionSalvaguardaAdmin(admin.ModelAdmin):
+    list_display = ("periodo", "codigo", "estado", "evidencia", "responsable", "fecha")
+    list_filter = ("codigo", "estado")

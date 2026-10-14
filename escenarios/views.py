@@ -3,7 +3,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from emprendimientos.models import Periodo
 from escenarios.models import Escenario
-from escenarios.services import FACTORES_POR_DEFECTO, sensibilidad, simular
+from escenarios.services import FACTORES_POR_DEFECTO, sensibilidad, sensibilidad_pesos, simular
+from framework.services import serializar
 
 
 def lista(request):
@@ -18,7 +19,7 @@ def lista(request):
 
 
 def simular_periodo(request, pk):
-    """Corre los escenarios optimista, esperado y pesimista, más la sensibilidad."""
+    """Escenarios optimista, esperado y pesimista, más sensibilidad de desempeño y de pesos."""
     periodo = get_object_or_404(Periodo, pk=pk)
     mediciones = periodo.mediciones_dict()
 
@@ -35,23 +36,18 @@ def simular_periodo(request, pk):
         except (TypeError, ValueError):
             delta = 0.10
 
-    resultados = simular(mediciones, factores)
-    base, filas_sensibilidad = sensibilidad(mediciones, delta)
+    resultados = simular(mediciones, factores, periodo=periodo)
+    base, filas_sensibilidad = sensibilidad(mediciones, delta, periodo=periodo)
 
     if request.method == "POST" and request.POST.get("guardar"):
         for r in resultados:
+            res = r["resultado"]
             Escenario.objects.update_or_create(
                 periodo=periodo,
                 tipo=r["tipo"],
                 defaults={
-                    "factor": r["factor"],
-                    "irr": r["resultado"]["irr"],
-                    "minimo_dimensional": r["resultado"]["minimo_dimensional"],
-                    "veredicto": r["resultado"]["veredicto"],
-                    "detalle": {
-                        d["dimension"].codigo: d["nivel"]
-                        for d in r["resultado"]["dimensiones"]
-                    },
+                    "factor": r["factor"], "irr": res["irr"], "clasificacion": res["clasificacion"],
+                    "veredicto": res["veredicto"], "version": res["version"], "detalle": serializar(res),
                 },
             )
         messages.success(request, "Escenarios guardados para el período.")
@@ -67,5 +63,6 @@ def simular_periodo(request, pk):
             "delta_pct": round(delta * 100),
             "base": base,
             "sensibilidad": filas_sensibilidad,
+            "sensibilidad_pesos": sensibilidad_pesos(base),
         },
     )

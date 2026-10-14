@@ -37,50 +37,47 @@ Instrumentos del protocolo implementados: matriz bibliográfica, registro PRISMA
 construcción del framework, matriz de indicadores (KPIs), cuestionario Delphi con escala
 Likert de cinco niveles y matriz de validación (IVC, S-CVI y W de Kendall).
 
-## El modelo de cálculo
+## El modelo de cálculo (FRR 1.0)
 
-Cada indicador se traduce a una escala de cinco niveles mediante cuatro cortes (`c1`–`c4`),
-editables desde el panel de administración:
+Implementa la especificación *Fase 2. Diseño conceptual y operacional del FRR* (versión
+científica 2.0, carpeta `Documentación Base`).
 
-| Nivel | Nombre | Criterio |
-|---|---|---|
-| 0 | Degenerativo | Reduce la capacidad del capital |
-| 1 | Mitigado | Menos daño, balance aún negativo |
-| 2 | Neutro / sostenible | Balance ≈ 0, el capital se mantiene |
-| 3 | Restaurativo | Recupera capacidad perdida |
-| 4 | Regenerativo | Supera la línea base y el efecto persiste sin la empresa |
+**Arquitectura.** D1 rentabilidad económica · D2 regeneración ambiental · D3 valor social ·
+D4 excelencia operacional, con 42 KPI candidatos (E1–E7, A1–A10, S1–S13, O1–O12), cada uno con
+fórmula, componentes, rol, estado (candidato, activo, excluido) y tipo de normalización.
 
-**Dentro** de una dimensión los indicadores se promedian de forma ponderada: miden el mismo
-capital y son sustituibles entre sí. **Entre** dimensiones la agregación es geométrica:
+**Dos niveles de evaluación.**
+
+1. *Salvaguardas* `R = G1 × G2 × G3 × G4 × G5`: viabilidad económica, no daño social crítico,
+   resultado ambiental positivo (A10 frente a línea base), trazabilidad y cobertura, y
+   persistencia temporal. Si alguna es desconocida, R es «indeterminado», nunca 0.
+2. *Puntuaciones descriptivas*, solo con cobertura suficiente:
 
 ```
-IRR = Π (D_i / 4)^w_i        con  Σ w_i = 1,  i = 1..4
+z    = min[1, max(0, (x − L)/(U − L))]       (beneficio; costo y objetivo análogos)
+S(d) = Σ w·z / Σ w                            (KPI observados y puntuables)
+C(d) = Σ w observados / Σ w aplicables        (NA documentados fuera del denominador)
+IRR  = Π (ε + (1−ε)·S(d))^α(d)                IRR₀ = Π S(d)^α(d)
 ```
 
-De ahí se siguen las dos propiedades que distinguen a este framework de un puntaje ESG
-convencional:
+**Clasificación.** (a) información insuficiente · (b) inviabilidad económica · (c) viabilidad
+sin evidencia regenerativa · (d) desempeño sostenible o de transición · (e) regeneración
+verificable (solo con R = 1).
 
-1. **No compensatoriedad.** Si una dimensión cae a nivel 0 el índice se anula, sin que ninguna
-   otra pueda rescatarlo. No es una recomendación de buenas prácticas, es una propiedad del
-   operador de agregación.
-2. **Regla de umbral.** Ningún emprendimiento califica como regenerativo si su mínimo
-   dimensional es menor a 3, cualquiera sea su IRR. El índice ordena; el mínimo califica.
+**Reglas de datos.** Los faltantes se registran como ND, NA o NV y nunca como cero. Un KPI sin
+referencias L/U justificadas se registra pero no se puntúa. Los pesos α son iguales (0,25)
+hasta la validación experta. Cada evaluación guarda la versión y los parámetros usados.
 
-El módulo de elasticidad calcula la ganancia de IRR de subir un nivel cada dimensión, lo que
-identifica el cuello de botella regenerativo y prioriza la intervención.
+`manage.py calcular_referencias` propone L/U provisionales (percentiles P10–P90 de la muestra
+observada) y los guarda solo con `--aplicar`, dejando constancia en la auditoría.
 
 ## La red neuronal
 
-Perceptrón multicapa `n → h → 1` (tanh en la capa oculta, sigmoide en la salida), entrenado
-por retropropagación con descenso de gradiente estocástico e inicialización de Xavier. Las
-entradas son los indicadores marcados como `es_entrada_rna`; la salida es el IRR.
-
-Cuando no hay volumen suficiente de datos reales, el generador construye escenarios simulados
-derivados del propio framework — la vía que el protocolo prevé expresamente. Las métricas
-reportadas son MSE, RMSE, MAE y R² sobre un conjunto de validación del 20 %.
-
-En cada evaluación la predicción de la red se contrasta contra el cálculo analítico: la
-diferencia es el error del modelo en ese punto del espacio de variables.
+Perceptrón multicapa `n → h → 1` (tanh en la capa oculta, sigmoide en la salida). Sus
+entradas son los KPI con referencias justificadas y su salida es el IRR. Es **exploratoria**:
+entrenada con escenarios simulados mide la capacidad de reproducir el framework y no
+constituye validación empírica. No se entrena si el IRR no es calculable, y no predice si
+falta alguna entrada (los faltantes nunca se reemplazan por cero).
 
 ## Estadística Delphi
 
@@ -123,7 +120,7 @@ desacuerdo.
 | `manage.py cargar_demo` | Carga tres emprendimientos de ejemplo, expertos, dos rondas Delphi, referencias y PRISMA |
 | `manage.py preparar_dataset_publico --companias … --ranking … --blab …` | Regenera `emprendimientos/datos/emprendimientos_ecuador.csv` desde los archivos oficiales de la SCVS y el directorio de B Lab |
 | `manage.py importar_emprendimientos [archivo.csv]` | Carga (o actualiza, sin duplicar) los emprendimientos del CSV, con sus períodos y mediciones |
-| `manage.py test` | Ejecuta las 58 pruebas del motor de cálculo, la RNA, Delphi, la carga de datos, la administración y las vistas |
+| `manage.py test` | Ejecuta las 70 pruebas del motor de cálculo, la RNA, Delphi, la carga de datos, la administración y las vistas |
 
 ## Datos de demostración
 

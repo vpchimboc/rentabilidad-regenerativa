@@ -95,14 +95,17 @@ class Command(BaseCommand):
                 )
                 periodos += 1
                 for codigo, ind in indicadores.items():
+                    if codigo not in fila:
+                        continue  # el CSV no informa este KPI
                     valor = fila.get(codigo)
                     if valor in (None, ""):
-                        continue
-                    Medicion.objects.update_or_create(
-                        periodo=periodo,
-                        indicador=ind,
-                        defaults={"valor": float(valor), "fuente": datos["fuente"][:160]},
-                    )
+                        # Columna presente pero no calculable con la fuente: ND documentado, nunca cero.
+                        defaults = {"estado": Medicion.ND, "valor": None, "fuente": datos["fuente"][:160],
+                                    "observaciones": "No calculable con los datos de la fuente pública"}
+                    else:
+                        defaults = {"estado": Medicion.OBS, "valor": float(valor), "fuente": datos["fuente"][:160],
+                                    "observaciones": ""}
+                    Medicion.objects.update_or_create(periodo=periodo, indicador=ind, defaults=defaults)
                     mediciones += 1
 
         return {"creados": creados, "actualizados": actualizados, "periodos": periodos, "mediciones": mediciones}

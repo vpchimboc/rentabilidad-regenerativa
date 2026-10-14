@@ -1,103 +1,93 @@
-"""Simulación de escenarios y análisis de sensibilidad."""
+"""Simulación de escenarios y análisis de sensibilidad del FRR (objetivo 4, Fase 4).
 
-from framework.models import Dimension
-from framework.services import evaluar
+Los escenarios son declarados («qué pasaría si…») sobre las mediciones reales de un
+período; no constituyen evidencia de validación (§2.10.3).
+"""
+
+from framework.models import Indicador
+from framework.services import _agregar, cargar_dimensiones, evaluar
 
 FACTORES_POR_DEFECTO = {"OPT": 1.15, "ESP": 1.00, "PES": 0.85}
 
 
 def _mejorar(valor, factor, ind):
-    """Escala un valor en el sentido de "mejor" (factor > 1) o "peor" (factor < 1).
+    """Mueve un valor en el sentido de «mejor» (factor > 1) o «peor» (factor < 1).
 
-    Se trabaja sobre el desempeño con signo: positivo cuando el valor ya es
-    favorable. Así un margen negativo mejora acercándose a cero y una captura
-    neta de carbono (valor negativo en un indicador de "menor es mejor") mejora
-    capturando más, en lugar de invertirse el sentido del escenario.
+    Beneficio: aumenta el desempeño; costo: lo reduce; objetivo: lo acerca o aleja de T.
+    Se trabaja sobre el desempeño con signo para que los valores negativos (pérdidas,
+    resultados netos) mejoren en la dirección correcta.
     """
     if not factor or factor <= 0:
         return valor
-    desempeno = -valor if ind.direccion == ind.MENOR_MEJOR else valor
+    if ind.tipo == Indicador.OBJETIVO:
+        if ind.ref_t is None:
+            return valor
+        return ind.ref_t + (valor - ind.ref_t) / factor
+    desempeno = -valor if ind.tipo == Indicador.COSTO else valor
     desempeno = desempeno * factor if desempeno > 0 else desempeno / factor
-    return -desempeno if ind.direccion == ind.MENOR_MEJOR else desempeno
-
-
-def _aplicar_factor(mediciones, factor, indicadores):
-    """Aplica el factor respetando la dirección del indicador.
-
-    En un indicador de "menor es mejor" (residuos, consumo energético) un
-    escenario optimista implica reducir el valor, no aumentarlo.
-    """
-    ajustadas = {}
-    for codigo, valor in mediciones.items():
-        ind = indicadores.get(codigo)
-        if ind is None or valor is None:
-            ajustadas[codigo] = valor
-            continue
-        ajustadas[codigo] = _mejorar(valor, factor, ind)
-    return ajustadas
+    return -desempeno if ind.tipo == Indicador.COSTO else desempeno
 
 
 def _indice_indicadores(dimensiones):
+    return {ind.codigo: ind for dim in dimensiones for var in dim.variables.all() for ind in var.indicadores.all()}
+
+
+def _aplicar_factor(mediciones, factor, indicadores):
     return {
-        ind.codigo: ind
-        for dim in dimensiones
-        for var in dim.variables.all()
-        for ind in var.indicadores.all()
+        codigo: (_mejorar(valor, factor, indicadores[codigo]) if codigo in indicadores and valor is not None else valor)
+        for codigo, valor in mediciones.items()
     }
 
 
-def simular(mediciones, factores=None):
-    """Corre los tres escenarios y devuelve sus resultados."""
+def simular(mediciones, factores=None, **contexto):
     factores = factores or FACTORES_POR_DEFECTO
-    dimensiones = list(Dimension.objects.prefetch_related("variables__indicadores").all())
+    dimensiones = cargar_dimensiones()
     indicadores = _indice_indicadores(dimensiones)
-
     resultados = []
     for tipo in ("OPT", "ESP", "PES"):
         factor = float(factores.get(tipo, FACTORES_POR_DEFECTO[tipo]))
-        ajustadas = _aplicar_factor(mediciones, factor, indicadores)
-        res = evaluar(ajustadas, dimensiones)
+        res = evaluar(_aplicar_factor(mediciones, factor, indicadores), dimensiones, **contexto)
         resultados.append({"tipo": tipo, "factor": factor, "resultado": res})
     return resultados
 
 
-def sensibilidad(mediciones, delta=0.10):
-    """Análisis de sensibilidad: efecto sobre el IRR de variar ±delta cada dimensión.
-
-    Devuelve las dimensiones ordenadas por amplitud del efecto, que es la
-    medida de cuáles variables gobiernan el comportamiento del framework.
-    """
-    dimensiones = list(Dimension.objects.prefetch_related("variables__indicadores").all())
+def sensibilidad(mediciones, delta=0.10, **contexto):
+    """Sensibilidad del IRR ante el desempeño de cada dimensión (±delta en sus KPI)."""
+    dimensiones = cargar_dimensiones()
     indicadores = _indice_indicadores(dimensiones)
-    base = evaluar(mediciones, dimensiones)
-
+    base = evaluar(mediciones, dimensiones, **contexto)
     filas = []
     for dim in dimensiones:
-        codigos = {
-            ind.codigo
-            for var in dim.variables.all()
-            for ind in var.indicadores.all()
-        }
-        arriba = dict(mediciones)
-        abajo = dict(mediciones)
-        for codigo in codigos:
-            if mediciones.get(codigo) is None:
-                continue
-            ind = indicadores[codigo]
-            arriba[codigo] = _mejorar(mediciones[codigo], 1 + delta, ind)
-            abajo[codigo] = _mejorar(mediciones[codigo], 1 / (1 + delta), ind)
-
-        irr_arriba = evaluar(arriba, dimensiones)["irr"]
-        irr_abajo = evaluar(abajo, dimensiones)["irr"]
-        filas.append(
-            {
-                "dimension": dim,
-                "irr_menos": round(irr_abajo, 4),
-                "irr_base": base["irr"],
-                "irr_mas": round(irr_arriba, 4),
-                "amplitud": round(irr_arriba - irr_abajo, 4),
-            }
-        )
-
-    filas.sort(key=lambda f: -f["amplitud"])
+        codigos = {i.codigo for v in dim.variables.all() for i in v.indicadores.all()}
+        arriba, abajo = dict(mediciones), dict(mediciones)
+        for codigo in codigos & set(mediciones):
+            arriba[codigo] = _mejorar(mediciones[codigo], 1 + delta, indicadores[codigo])
+            abajo[codigo] = _mejorar(mediciones[codigo], 1 / (1 + delta), indicadores[codigo])
+        irr_mas = evaluar(arriba, dimensiones, **contexto)["irr"]
+        irr_menos = evaluar(abajo, dimensiones, **contexto)["irr"]
+        amplitud = (irr_mas - irr_menos) if irr_mas is not None and irr_menos is not None else None
+        filas.append({"dimension": dim, "irr_menos": irr_menos, "irr_base": base["irr"],
+                      "irr_mas": irr_mas, "amplitud": None if amplitud is None else round(amplitud, 4)})
+    filas.sort(key=lambda f: (f["amplitud"] is None, -(f["amplitud"] or 0)))
     return base, filas
+
+
+def sensibilidad_pesos(base, variacion=0.05):
+    """Sensibilidad del IRR ante cambios de los pesos α (Fase 4: pesos y umbrales)."""
+    if not base["irr_calculable"]:
+        return []
+    puntajes = {d["dimension"].codigo: d["S"] for d in base["dimensiones"]}
+    alfas = {d["dimension"].codigo: d["alfa"] for d in base["dimensiones"]}
+    filas = []
+    for cod in alfas:
+        resultado = {}
+        for signo in (-1, 1):
+            nuevos = dict(alfas)
+            nuevos[cod] = max(0.0, alfas[cod] + signo * variacion)
+            total = sum(nuevos.values()) or 1.0
+            nuevos = {k: v / total for k, v in nuevos.items()}
+            resultado[signo], _ = _agregar(puntajes, nuevos, base["epsilon"])
+        filas.append({"codigo": cod, "irr_menos": round(resultado[-1], 4), "irr_mas": round(resultado[1], 4),
+                      "amplitud": round(abs(resultado[1] - resultado[-1]), 4)})
+    return sorted(filas, key=lambda f: -f["amplitud"])
+

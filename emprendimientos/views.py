@@ -9,7 +9,7 @@ from administracion.models import ConfiguracionSistema, registrar
 from administracion.permisos import PERMISO_EXPORTAR, requiere_permiso
 from core.indicadores import ORIGENES, filtrar_emprendimientos
 from emprendimientos.models import Emprendimiento, Evaluacion, Periodo
-from framework.services import elasticidad, evaluar
+from framework.services import elasticidad, serializar
 from rna.services import predecir
 
 
@@ -84,31 +84,25 @@ def detalle(request, pk):
 
 
 def evaluar_periodo(request, pk):
-    """Calcula el IRR del período y guarda la evaluación."""
+    """Evalúa el período con el FRR y, al confirmar, guarda el resultado con su configuración."""
     periodo = get_object_or_404(Periodo, pk=pk)
     mediciones = periodo.mediciones_dict()
-    resultado, elasticidades = elasticidad(mediciones)
+    resultado, elasticidades = elasticidad(mediciones, periodo=periodo)
 
     if request.method == "POST":
         Evaluacion.objects.create(
             periodo=periodo,
-            irr=resultado["irr"],
-            media_aritmetica=resultado["media_aritmetica"],
-            minimo_dimensional=resultado["minimo_dimensional"],
+            clasificacion=resultado["clasificacion"],
             veredicto=resultado["veredicto"],
+            irr=resultado["irr"],
+            irr0=resultado["irr0"],
+            media_aritmetica=resultado["media_aritmetica"],
+            elegibilidad=resultado["R_texto"],
             cuello_de_botella=resultado["cuello_de_botella"] or "",
-            detalle={
-                "dimensiones": [
-                    {
-                        "codigo": d["dimension"].codigo,
-                        "nivel": d["nivel"],
-                        "peso": d["peso"],
-                    }
-                    for d in resultado["dimensiones"]
-                ]
-            },
+            version=resultado["version"],
+            detalle=serializar(resultado),
         )
-        messages.success(request, f"Evaluación guardada. IRR = {resultado['irr']:.4f}")
+        messages.success(request, f"Evaluación guardada: {resultado['veredicto']}.")
         return redirect("emprendimiento_detalle", pk=periodo.emprendimiento_id)
 
     return render(

@@ -45,6 +45,16 @@ class AccesoTest(TestCase):
             with self.subTest(ruta=nombre):
                 self.assertEqual(self.client.get(reverse(nombre)).status_code, 200)
 
+    def test_panel_con_catalogo_cargado_y_alertas_de_referencias(self):
+        call_command("cargar_framework", verbosity=0)
+        from framework.models import Indicador
+
+        Indicador.objects.filter(codigo="E2").update(ref_l=0, ref_u=0.2, fuente_referencia="", referencia_provisional=True)
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse("adm_panel"))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "sin sustento documentado")
+
     def test_menu_de_administracion_solo_para_administradores(self):
         self.assertNotContains(self.client.get("/"), reverse("adm_usuarios"))
         self.client.force_login(self.analista)

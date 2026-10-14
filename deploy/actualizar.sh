@@ -76,11 +76,15 @@ if [[ -f "${PROYECTO}/db.sqlite3" ]]; then
   ls -1t "${PROYECTO}"/db.sqlite3.respaldo-* 2>/dev/null | tail -n +11 | xargs -r rm -f
 fi
 manage migrate --noinput
+# Catálogo FRR: idempotente; conserva referencias, pesos y estados ajustados por la investigación.
+manage cargar_framework
 
 # Si cambió el dataset público, se reimporta (actualiza sin duplicar).
 if grep -q '^emprendimientos/datos/emprendimientos_ecuador.csv' <<<"$CAMBIADOS"; then
   verde "El dataset de emprendimientos cambió: reimportando"
   manage importar_emprendimientos
+  manage limpiar_datos --aplicar
+  manage calcular_referencias --aplicar
 fi
 
 # --- 4. Archivos estáticos ---------------------------------------------------------

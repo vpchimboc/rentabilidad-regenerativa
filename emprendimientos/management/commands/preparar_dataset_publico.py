@@ -19,8 +19,9 @@ Criterio de selección, reproducible:
    empleados. Se estratifica por sección CIIU y, dentro de cada sección, se toman
    las de mayores ventas.
 
-Solo se derivan los indicadores cuya fórmula coincide con un dato publicado. Las
-dimensiones social y ambiental no tienen fuente pública: quedan sin dato.
+Solo se derivan los KPI del catálogo FRR 1.0 cuya fórmula coincide con datos publicados
+(E1–E5 de la dimensión económica). Las dimensiones ambiental, social y operacional no
+tienen fuente pública: quedan sin dato (nunca como cero).
 """
 
 import csv
@@ -39,7 +40,7 @@ SALIDA_POR_DEFECTO = Path(settings.BASE_DIR) / "emprendimientos" / "datos" / "em
 COLUMNAS = [
     "origen", "nombre", "ruc", "sector", "ciudad", "provincia", "ciiu", "empleados",
     "fuente", "fuente_url", "anio", "ventas", "costos_fijos", "costos_variables",
-    "ECO_ROI", "ECO_AUTON", "OPE_PROD", "OPE_COSTO", "notas",
+    "utilidad_neta", "E1", "E2", "E3", "E4", "E5", "notas",
 ]
 
 SECCIONES_COMPLEMENTO = ["A", "C", "G", "I", "J", "M"]
@@ -101,23 +102,38 @@ def num(valor):
         return None
 
 
-def indicadores(fila):
-    """Indicadores del framework cuya fórmula coincide con un dato de la SCVS."""
-    ventas = num(fila["ingresos_ventas"]) or 0.0
-    totales = num(fila["ingresos_totales"]) or 0.0
-    empleados = num(fila["n_empleados"]) or 0.0
-    costo_ventas = num(fila["costos_ventas_prod"]) or 0.0
-    gastos = num(fila["gastos_admin_ventas"]) or 0.0
-    roa = num(fila["roa"])
+def indicadores(est, anterior=None):
+    """KPI E1–E5 del FRR calculados con las fórmulas de la Fase 2 (§2.6).
+
+    E1 margen de seguridad (V − PE)/V, con PE = CF/(1 − CV/V)
+    E2 margen neto UN/V
+    E3 ROA UN/A_prom, A_prom = (activos inicio + activos fin)/2 (requiere el año anterior)
+    E4 razón corriente AC/PC (indicador «liquidez corriente» publicado por la SCVS)
+    E5 crecimiento de ingresos (V_t − V_t−1)/V_t−1
+    Un KPI no calculable se omite (queda ND), nunca se registra como cero.
+    """
+    ventas = num(est["ingresos_ventas"]) or 0.0
+    cv = num(est["costos_ventas_prod"]) or 0.0
+    cf = num(est["gastos_admin_ventas"]) or 0.0
+    un = num(est["utilidad_neta"])
+    activos = num(est["activos"])
     datos = {}
-    if roa is not None:
-        datos["ECO_ROI"] = round(roa * 100, 2)
-    if totales > 0:
-        datos["ECO_AUTON"] = round(min(ventas / totales, 1.0) * 100, 2)
-    if ventas > 0 and empleados > 0:
-        datos["OPE_PROD"] = round(ventas / empleados, 2)
-    if ventas > 0 and (costo_ventas or gastos):
-        datos["OPE_COSTO"] = round((costo_ventas + gastos) / ventas * 100, 2)
+    if ventas > 0 and cv < ventas:
+        pe = cf / (1 - cv / ventas)
+        datos["E1"] = round((ventas - pe) / ventas, 6)
+    if ventas > 0 and un is not None:
+        datos["E2"] = round(un / ventas, 6)
+    if anterior is not None and un is not None:
+        activos_ant = num(anterior["activos"])
+        if activos and activos_ant and activos + activos_ant > 0:
+            datos["E3"] = round(un / ((activos + activos_ant) / 2), 6)
+    liquidez = num(est["liquidez_corriente"])
+    if liquidez is not None and liquidez > 0:
+        datos["E4"] = round(liquidez, 6)
+    if anterior is not None:
+        ventas_ant = num(anterior["ingresos_ventas"]) or 0.0
+        if ventas_ant > 0:
+            datos["E5"] = round((ventas - ventas_ant) / ventas_ant, 6)
     return datos
 
 
@@ -139,7 +155,7 @@ class Command(BaseCommand):
                 raise CommandError(f"No existe el archivo --{clave}: {opts[clave]}")
 
         companias = self._leer_companias(opts["companias"])
-        ranking = self._leer_ranking(opts["ranking"], opts["anio"])
+        ranking, self.anterior = self._leer_ranking(opts["ranking"], opts["anio"])
         self.stdout.write(f"SCVS: {len(companias)} compañías, {len(ranking)} estados {opts['anio']}.")
 
         filas = self._empresas_b(opts["blab"], companias, ranking, opts["anio"])
@@ -170,9 +186,15 @@ class Command(BaseCommand):
             }
 
     def _leer_ranking(self, ruta, anio):
-        anio = str(anio)
+        """Estados del año de análisis y del anterior (para E3 y E5)."""
+        actual, anterior = {}, {}
         with open(ruta, encoding="utf-8", newline="") as fh:
-            return {f["expediente"]: f for f in csv.DictReader(fh) if f["anio"] == anio}
+            for f in csv.DictReader(fh):
+                if f["anio"] == str(anio):
+                    actual[f["expediente"]] = f
+                elif f["anio"] == str(anio - 1):
+                    anterior[f["expediente"]] = f
+        return actual, anterior
 
     # -- construcción de filas ----------------------------------------------
 
@@ -191,12 +213,13 @@ class Command(BaseCommand):
                 ventas=round(ventas, 2),
                 costos_variables=round(num(est["costos_ventas_prod"]) or 0.0, 2),
                 costos_fijos=round(num(est["gastos_admin_ventas"]) or 0.0, 2),
-                **indicadores(est),
+                utilidad_neta=round(num(est["utilidad_neta"]) or 0.0, 2),
+                **indicadores(est, self.anterior.get(cia["expediente"])),
             )
             fila["notas"] = (
                 f"Estados financieros {anio} publicados por la SCVS (expediente {cia['expediente']}). "
                 "Costos variables = costo de ventas y producción; costos fijos = gastos de "
-                "administración y ventas (aproximación). ECO_ROI = ROA. "
+                "administración y ventas (aproximación para E1). E3 y E5 usan los estados del año anterior. "
                 + fila["notas"]
             ).strip()
         return fila

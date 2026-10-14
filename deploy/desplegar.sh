@@ -101,8 +101,9 @@ contar() { manage shell -c "'$1'" 2>/dev/null | tail -1; }
 if [[ "$(contar 'from framework.models import Dimension; print(Dimension.objects.count())')" == "0" ]]; then
   verde "Base vacía: cargando datos desde el repositorio"
   manage cargar_framework                 # dimensiones, variables, 17 indicadores, cuestionario Delphi
-  manage cargar_demo                      # 3 casos ilustrativos, expertos, rondas Delphi, bibliometría, PRISMA
-  manage importar_emprendimientos         # 120 emprendimientos de fuentes públicas (CSV del repositorio)
+  manage importar_emprendimientos         # emprendimientos reales con datos utilizables (CSV depurado)
+  manage limpiar_datos --aplicar          # garantiza que solo queden casos reales y utilizables
+  manage calcular_referencias --aplicar   # referencias L/U provisionales (P10–P90) de E1–E5
   manage entrenar_rna                     # red neuronal entrenada y activa
 else
   echo "La base ya tiene datos: no se recargan."

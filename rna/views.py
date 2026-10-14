@@ -2,19 +2,14 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 
 from rna.models import ModeloRNA
-from rna.services import entrenar, indicadores_entrada, modelo_activo, predecir
+from rna.services import RNANoEntrenable, diagnostico, entrenar, indicadores_entrada, modelo_activo, predecir
 
 
 def panel(request):
-    modelo = modelo_activo()
     return render(
         request,
         "rna/panel.html",
-        {
-            "modelo": modelo,
-            "modelos": ModeloRNA.objects.all()[:10],
-            "entradas": indicadores_entrada(),
-        },
+        {"modelo": modelo_activo(), "modelos": ModeloRNA.objects.all()[:10], "diag": diagnostico()},
     )
 
 
@@ -29,21 +24,24 @@ def entrenar_modelo(request):
     except (TypeError, ValueError):
         messages.error(request, "Parámetros de entrenamiento inválidos.")
         return redirect("rna_panel")
-
-    modelo = entrenar(n_muestras=n_muestras, n_ocultas=n_ocultas, epocas=epocas, lr=lr)
+    try:
+        modelo = entrenar(n_muestras=n_muestras, n_ocultas=n_ocultas, epocas=epocas, lr=lr)
+    except RNANoEntrenable as error:
+        messages.error(request, f"No es posible entrenar todavía. {error}")
+        return redirect("rna_panel")
     messages.success(
         request,
-        f"Modelo entrenado con {n_muestras} muestras simuladas. "
-        f"R² = {modelo.metricas.get('r2')} · RMSE = {modelo.metricas.get('rmse')}",
+        f"Modelo exploratorio entrenado con {n_muestras} escenarios simulados. "
+        f"R² = {modelo.metricas.get('r2')} · RMSE = {modelo.metricas.get('rmse')}. "
+        "No constituye validación empírica.",
     )
     return redirect("rna_panel")
 
 
 def predecir_vista(request):
-    """Formulario de predicción manual: se ingresan los indicadores y la red estima el IRR."""
+    """Predicción manual: se ingresan todas las entradas y la red estima el IRR."""
     entradas = indicadores_entrada()
     valores, resultado = {}, None
-
     if request.method == "POST":
         for ind in entradas:
             try:
@@ -52,11 +50,8 @@ def predecir_vista(request):
                 valores[ind.codigo] = None
         resultado = predecir({k: v for k, v in valores.items() if v is not None})
         if resultado is None:
-            messages.warning(request, "Primero debe entrenar un modelo de RNA.")
-
+            messages.warning(request, "Primero debe entrenarse un modelo compatible con el catálogo vigente.")
+        elif not resultado["aplicable"]:
+            messages.warning(request, "Complete todas las entradas: la red no reemplaza faltantes por cero.")
     filas = [{"ind": ind, "valor": valores.get(ind.codigo)} for ind in entradas]
-    return render(
-        request,
-        "rna/predecir.html",
-        {"filas": filas, "resultado": resultado},
-    )
+    return render(request, "rna/predecir.html", {"filas": filas, "resultado": resultado})

@@ -28,10 +28,10 @@ EMPRENDIMIENTOS = [
         "descripcion": "Cacao fino de aroma bajo manejo agroforestal, con 142 productores asociados.",
         "periodo": {"anio": 2025, "ventas": 840000, "costos_fijos": 310000, "costos_variables": 420000},
         "mediciones": {
-            "ECO_MARGEN": 8.5, "ECO_ROI": 16.0, "ECO_PE": 1.32, "ECO_REINV": 38, "ECO_AUTON": 94,
-            "OPE_EFIC": 71, "OPE_PROD": 35000, "OPE_COSTO": 78, "OPE_ENER": 1.4,
-            "SOC_INGRESO": 34, "SOC_CADENA": 41, "SOC_CAPAC": 18, "SOC_AUTON": 45,
-            "AMB_CIRC": 71, "AMB_RESID": 0.18, "AMB_CARB": -320, "AMB_AGUA": 19,
+            "E2": 0.085, "E3": 0.16, "E4": 1.8, "E5": 0.09, "E7": 0.38,
+            "A2": 0.71, "A3": 1.4, "A5": 0.019, "A6": 2.1, "A7": 0.18, "A8": 0.82, "A10": 12.0,
+            "S1": 0.92, "S2": 0.06, "S5": 0.82, "S8": 0.75, "S13": 0.80, "S4": 1.2, "S7": 0.85, "S9": 0.95, "S12": 0.64,
+            "O3": 0.71, "O4": 0.93, "O2": 0.62, "O9": 0.5, "O10": 0.8, "O5": 0.02, "O7": 0.6, "O12": 0.7,
         },
     },
     {
@@ -43,10 +43,10 @@ EMPRENDIMIENTOS = [
         "descripcion": "Confección con fibras recuperadas y tintura de bajo consumo hídrico.",
         "periodo": {"anio": 2025, "ventas": 1250000, "costos_fijos": 480000, "costos_variables": 690000},
         "mediciones": {
-            "ECO_MARGEN": 11.2, "ECO_ROI": 19.5, "ECO_PE": 1.46, "ECO_REINV": 22, "ECO_AUTON": 100,
-            "OPE_EFIC": 79, "OPE_PROD": 27170, "OPE_COSTO": 71, "OPE_ENER": 1.05,
-            "SOC_INGRESO": 12, "SOC_CADENA": 26, "SOC_CAPAC": 26, "SOC_AUTON": 34,
-            "AMB_CIRC": 44, "AMB_RESID": 0.42, "AMB_CARB": 85, "AMB_AGUA": 28,
+            "E2": 0.112, "E3": 0.195, "E4": 1.4, "E5": 0.05, "E7": 0.22,
+            "A2": 0.44, "A3": 1.05, "A5": 0.028, "A6": 3.9, "A7": 0.42, "A8": 0.55, "A10": -3.0,
+            "S1": 0.80, "S2": 0.12, "S5": 0.70, "S8": 0.50, "S13": 0.55, "S4": 3.5, "S7": 0.60, "S9": 0.80, "S12": 0.35,
+            "O3": 0.79, "O4": 0.88, "O2": 0.55, "O9": 0.4, "O10": 0.7, "O5": 0.05, "O7": 0.4, "O12": 0.6,
         },
     },
     {
@@ -58,10 +58,10 @@ EMPRENDIMIENTOS = [
         "descripcion": "Gestión de residuos orgánicos y compostaje industrial para restaurantes.",
         "periodo": {"anio": 2025, "ventas": 320000, "costos_fijos": 145000, "costos_variables": 150000},
         "mediciones": {
-            "ECO_MARGEN": 4.1, "ECO_ROI": 7.2, "ECO_PE": 1.05, "ECO_REINV": 15, "ECO_AUTON": 72,
-            "OPE_EFIC": 58, "OPE_PROD": 26667, "OPE_COSTO": 92, "OPE_ENER": 2.3,
-            "SOC_INGRESO": 9, "SOC_CADENA": 22, "SOC_CAPAC": 12, "SOC_AUTON": 38,
-            "AMB_CIRC": 82, "AMB_RESID": 0.09, "AMB_CARB": -140, "AMB_AGUA": 15,
+            "E2": 0.041, "E3": 0.072, "E4": 1.1, "E5": 0.12, "E7": 0.15,
+            "A2": 0.82, "A3": 2.3, "A5": 0.015, "A6": 1.4, "A7": 0.09, "A8": 0.9, "A10": 5.0,
+            "S1": 0.70, "S2": 0.18, "S5": 0.64, "S8": 0.40, "S13": 0.45, "S4": 4.8, "S7": 0.45, "S9": 0.70, "S12": 0.55,
+            "O3": 0.58, "O4": 0.81, "O2": 0.48, "O9": 0.3, "O10": 0.5, "O5": 0.08, "O7": 0.3, "O12": 0.45,
         },
     },
 ]

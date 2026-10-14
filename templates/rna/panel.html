@@ -1,15 +1,23 @@
 {% extends "base.html" %}
 {% block titulo %}RNA{% endblock %}
+{% load iconos %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Red neuronal (RNA)</span>{% endblock %}
 
 {% block contenido %}
 <section>
   <p class="eyebrow">Objetivo específico 3</p>
   <h1>Red Neuronal Artificial (MLP)</h1>
-  <p class="lede">Perceptrón multicapa entrenado por retropropagación. Las entradas son los
-  indicadores del framework y la salida es el Índice de Rentabilidad Regenerativa. Cuando no
-  se dispone de datos reales suficientes, el protocolo prevé usar escenarios simulados
-  derivados del propio framework: es lo que hace el generador de muestras.</p>
+  <p class="lede">Perceptrón multicapa entrenado por retropropagación. Las entradas son los KPI con referencias
+  de normalización justificadas y la salida es el IRR del FRR. Es un modelo <b>exploratorio</b>: entrenado con
+  escenarios simulados mide la capacidad de reproducir el framework y <b>no constituye validación empírica</b>.
+  Con datos reales depurados (D1–D4 suficientes) se evaluará su viabilidad frente a modelos más sencillos.</p>
 </section>
+
+{% if diag.dimensiones_sin_referencias %}
+<div class="alerta warning">{% icono "triangle-alert" %}<span><b>Todavía no es posible entrenar.</b> Las dimensiones
+  {{ diag.dimensiones_sin_referencias|join:", " }} no tienen KPI con referencias L/U justificadas, por lo que el IRR
+  no es calculable y no hay etiquetas. Fije las referencias en Framework e indicadores (editor de datos).</span></div>
+{% endif %}
 
 <div class="split">
   <section class="tarjeta">
@@ -43,7 +51,7 @@
       <div class="kv"><span>n validación</span><span>{{ modelo.metricas.n_validacion }}</span></div>
       <p><a class="boton sec" href="{% url 'rna_predecir' %}">Predecir con el modelo</a></p>
     {% else %}
-      <p class="nota">No hay ningún modelo entrenado todavía.</p>
+      <p class="nota">No hay un modelo compatible con el catálogo vigente.</p>
     {% endif %}
   </section>
 </div>
@@ -72,15 +80,19 @@
   <h2>Variables de entrada de la red</h2>
   <div class="tscroll">
     <table>
-      <thead><tr><th>Dimensión</th><th>Código</th><th>Indicador</th><th>Unidad</th></tr></thead>
+      <thead><tr><th>Dimensión</th><th>Código</th><th>Indicador</th><th>Unidad</th><th class="num">L</th><th class="num">U</th></tr></thead>
       <tbody>
-      {% for i in entradas %}
+      {% for i in diag.entradas %}
         <tr>
           <td>{{ i.variable.dimension.codigo }}</td>
           <td><code>{{ i.codigo }}</code></td>
           <td>{{ i.nombre }}</td>
           <td>{{ i.unidad }}</td>
+          <td class="num">{{ i.ref_l|default_if_none:"—" }}</td>
+          <td class="num">{{ i.ref_u|default_if_none:"—" }}</td>
         </tr>
+      {% empty %}
+        <tr><td colspan="6" class="nota">Ningún KPI tiene referencias justificadas todavía.</td></tr>
       {% endfor %}
       </tbody>
     </table>

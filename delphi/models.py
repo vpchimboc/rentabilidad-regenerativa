@@ -27,8 +27,8 @@ class Experto(models.Model):
 
     @property
     def cumple_criterios(self):
-        """Criterios de selección declarados en el protocolo."""
-        return self.anios_experiencia >= 5 and self.grado in ("PHD", "MSC")
+        """Criterios del protocolo: maestría o doctorado, 5 años de experiencia y publicaciones científicas."""
+        return self.anios_experiencia >= 5 and self.grado in ("PHD", "MSC") and self.publicaciones >= 1
 
 
 class Ronda(models.Model):

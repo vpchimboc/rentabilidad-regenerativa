@@ -1,54 +1,77 @@
 {% extends "base.html" %}
 {% block titulo %}Matriz del Framework{% endblock %}
+{% load iconos %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Framework e indicadores</span>{% endblock %}
 
 {% block contenido %}
-<section>
-  <p class="eyebrow">Objetivo específico 2</p>
-  <h1>Matriz de construcción del Framework</h1>
-  <p class="lede">Dimensiones, variables, indicadores y KPIs con sus cortes de nivel. Los cortes
-  traducen cada valor medido a la escala 0–4; se editan desde el panel de administración.</p>
-</section>
-
-<section class="tarjeta">
-  <h2>Escala de niveles</h2>
-  <div class="escala">
-    {% for n, nombre in niveles %}
-      <div><b class="l{{ n }}">{{ n }} · {{ nombre|upper }}</b></div>
-    {% endfor %}
+<div class="cabecera-pagina">
+  <div>
+    <p class="eyebrow">Objetivo específico 2 · FRR {{ parametros.version }}</p>
+    <h1>Matriz de construcción del Framework</h1>
+    <p class="lede">Arquitectura candidata de la Fase 2: cuatro dimensiones, {{ total_kpi }} KPI candidatos,
+      salvaguardas no compensatorias y un índice descriptivo. Todo está sujeto a validación de contenido.</p>
   </div>
-</section>
+</div>
+
+<div class="split">
+  <section class="tarjeta">
+    <h2>{% icono "layers" %} Reglas de cálculo (§2.5)</h2>
+    <div class="formula">z (beneficio) = min[1, max(0, (x − L)/(U − L))]
+z (costo)     = min[1, max(0, (U − x)/(U − L))]
+z (objetivo)  = max[0, 1 − |x − T|/H]
+S(d)  = Σ w·z / Σ w            (KPI observados y puntuables)
+C(d)  = Σ w observados / Σ w aplicables
+IRR   = Π (ε + (1−ε)·S(d))^α(d)      IRR₀ = Π S(d)^α(d)
+R     = G1 × G2 × G3 × G4 × G5   (desconocida → indeterminado)</div>
+    <div class="kv"><span>ε (estabilidad numérica)</span><span>{{ parametros.epsilon }}</span></div>
+    <div class="kv"><span>Cobertura mínima por dimensión</span><span>{{ parametros.cobertura_minima }}</span></div>
+    <div class="kv"><span>KPI con referencias L/U justificadas</span><span>{{ total_puntuables }} de {{ total_kpi }}</span></div>
+    <p class="nota">Los indicadores sin referencias se registran, cuentan para la cobertura y no se puntúan.
+      Los faltantes (ND, NV) nunca se convierten en cero.</p>
+  </section>
+
+  <section class="tarjeta">
+    <h2>{% icono "shield" %} Salvaguardas y clasificación (§2.2, §2.4)</h2>
+    <div class="tscroll"><table>
+      <thead><tr><th scope="col">Condición</th><th scope="col">Regla</th></tr></thead>
+      <tbody>{% for cod, nombre in salvaguardas %}<tr><td><code>{{ cod }}</code></td><td>{{ nombre }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <div class="tscroll" style="margin-top:8px"><table>
+      <thead><tr><th scope="col">Clase</th><th scope="col">Resultado</th></tr></thead>
+      <tbody>{% for k, nombre, css in clasificaciones %}<tr><td><b>{{ k }}</b></td><td><span class="pill {{ css }}">{{ nombre }}</span></td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+</div>
 
 {% for fila in filas %}
 <section class="tarjeta">
-  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+  <div class="tarjeta-cab">
     <h2>{{ fila.dimension.codigo }} · {{ fila.dimension.nombre }}</h2>
-    <span class="nota">peso w = {{ fila.peso_normalizado }} · {{ fila.n_indicadores }} indicadores</span>
+    <span class="nota">α = {{ fila.alfa }} (provisional) · {{ fila.n_indicadores }} KPI · {{ fila.n_puntuables }} con referencias</span>
   </div>
-  {% if fila.dimension.descripcion %}<p class="nota">{{ fila.dimension.descripcion }}</p>{% endif %}
-
+  <p class="nota">{{ fila.dimension.descripcion }} <b>Función:</b> {{ fila.dimension.funcion }}</p>
   <div class="tscroll">
     <table>
-      <thead>
-        <tr>
-          <th>Variable</th><th>Código</th><th>Indicador / KPI</th><th>Unidad</th>
-          <th>Dirección</th><th class="num">Peso</th>
-          <th class="num">c1</th><th class="num">c2</th><th class="num">c3</th><th class="num">c4</th>
-          <th>RNA</th>
-        </tr>
-      </thead>
+      <thead><tr>
+        <th scope="col">KPI</th><th scope="col">Indicador · fórmula</th><th scope="col">Unidad</th>
+        <th scope="col">Tipo</th><th scope="col">Rol</th><th scope="col">Estado</th>
+        <th scope="col" class="num">L</th><th scope="col" class="num">U</th><th scope="col">Referencia</th>
+      </tr></thead>
       <tbody>
       {% for v in fila.variables %}
+        <tr><td colspan="9" style="background:var(--c-superficie-2)"><b>{{ v.nombre }}</b></td></tr>
         {% for i in v.indicadores.all %}
         <tr>
-          <td>{% if forloop.first %}{{ v.nombre }}{% endif %}</td>
           <td><code>{{ i.codigo }}</code></td>
-          <td>{{ i.nombre }}{% if i.formula %}<br><span class="nota">{{ i.formula }}</span>{% endif %}</td>
-          <td>{{ i.unidad }}</td>
-          <td class="nota">{{ i.get_direccion_display }}</td>
-          <td class="num">{{ i.peso }}</td>
-          <td class="num">{{ i.c1 }}</td><td class="num">{{ i.c2 }}</td>
-          <td class="num">{{ i.c3 }}</td><td class="num">{{ i.c4 }}</td>
-          <td>{% if i.es_entrada_rna %}sí{% else %}—{% endif %}</td>
+          <td>{{ i.nombre }}<br><span class="nota"><code>{{ i.formula }}</code> · {{ i.componentes|truncatechars:160 }}</span>
+            {% if i.equivalencia_v0 %}<br><span class="etq info">v0: {{ i.equivalencia_v0|truncatechars:70 }}</span>{% endif %}</td>
+          <td class="nota">{{ i.unidad }}</td>
+          <td class="nota">{{ i.get_tipo_display }}</td>
+          <td>{{ i.get_rol_display }}</td>
+          <td>{% if i.estado == "ACT" %}<span class="etq exito">Activo</span>{% elif i.estado == "EXCL" %}<span class="etq neutro">Excluido</span>{% else %}<span class="etq alerta">Candidato</span>{% endif %}</td>
+          <td class="num">{{ i.ref_l|default_if_none:"—" }}</td>
+          <td class="num">{{ i.ref_u|default_if_none:"—" }}</td>
+          <td class="nota">{% if i.puntuable %}{{ i.fuente_referencia|default:"Sin sustento registrado" }}{% if i.referencia_provisional %} <span class="etq alerta">provisional</span>{% endif %}{% else %}Sin referencias: no se puntúa{% endif %}</td>
         </tr>
         {% endfor %}
       {% endfor %}
@@ -57,8 +80,21 @@
   </div>
 </section>
 {% empty %}
-<section class="tarjeta">
-  <p>No hay dimensiones cargadas. Ejecute <code>python manage.py cargar_framework</code>.</p>
-</section>
+<section class="tarjeta"><p>No hay dimensiones cargadas. Ejecute <code>manage.py cargar_framework</code>.</p></section>
 {% endfor %}
+
+<section class="tarjeta" aria-labelledby="t-corr">
+  <h2 id="t-corr">{% icono "file-text" %} Matriz de correspondencia: 17 indicadores preliminares → 42 KPI candidatos</h2>
+  <p class="nota">Decisión documentada para cada indicador de la plataforma preliminar (DIREC 1, prioridad 1).</p>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th scope="col">Código v0</th><th scope="col">Indicador preliminar</th><th scope="col">KPI FRR</th><th scope="col">Decisión</th></tr></thead>
+      <tbody>{% for v0, nombre, destino, decision in correspondencia %}
+        <tr><td><code>{{ v0 }}</code></td><td>{{ nombre }}</td>
+          <td>{% if destino %}<code>{{ destino }}</code>{% else %}<span class="etq neutro">—</span>{% endif %}</td>
+          <td class="nota">{{ decision }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+  </div>
+</section>
 {% endblock %}

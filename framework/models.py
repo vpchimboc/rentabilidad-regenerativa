@@ -1,8 +1,15 @@
-"""Estructura del Framework: dimensiones, variables, indicadores y KPIs.
+"""Catálogo del Framework de Rentabilidad Regenerativa (FRR), versión 1.0.
 
-Corresponde al objetivo específico 2 del protocolo: "Definir los componentes,
-dimensiones, variables e indicadores que conformarán el Framework de
-Rentabilidad Regenerativa".
+Implementa la especificación «Fase 2. Diseño conceptual y operacional del FRR»
+(versión científica 2.0, 14-oct-2026):
+
+* Cuatro dimensiones con códigos semánticos estables: D1 económica, D2 ambiental,
+  D3 social, D4 operacional (§2.3).
+* Catálogo de 42 KPI candidatos E1–E7, A1–A10, S1–S13, O1–O12 (§2.6–2.9) con
+  fórmula, componentes, rol y estado.
+* Normalización a z ∈ [0, 1] con referencias L/U (beneficio y costo) o T/H
+  (objetivo) (§2.5). Sin referencias justificadas el indicador no se puntúa.
+* Parámetros de agregación versionados (ε, cobertura mínima) (§2.10.2).
 """
 
 from django.core.validators import MinValueValidator
@@ -10,14 +17,16 @@ from django.db import models
 
 
 class Dimension(models.Model):
-    """Las cuatro dimensiones del framework: económica, operativa, social y ambiental."""
+    """D1 económica · D2 ambiental · D3 social · D4 operacional."""
 
-    codigo = models.CharField(max_length=4, unique=True, help_text="D1, D2, D3, D4")
+    codigo = models.CharField(max_length=4, unique=True, help_text="D1, D2, D3, D4 (identificador semántico estable)")
     nombre = models.CharField(max_length=120)
     descripcion = models.TextField(blank=True)
+    funcion = models.CharField("Función en el FRR", max_length=200, blank=True)
     peso = models.FloatField(
-        default=0.25,
-        help_text="Peso w_i en la agregación geométrica. Los pesos se normalizan para sumar 1.",
+        "Peso α", default=0.25,
+        help_text="Peso dimensional α(d) en la agregación geométrica. Se normalizan para sumar 1. "
+                  "Provisional hasta la validación de expertos.",
     )
     orden = models.PositiveSmallIntegerField(default=0)
 
@@ -31,7 +40,7 @@ class Dimension(models.Model):
 
 
 class Variable(models.Model):
-    """Variable de una dimensión. Agrupa indicadores afines."""
+    """Agrupación temática de indicadores dentro de una dimensión."""
 
     dimension = models.ForeignKey(Dimension, on_delete=models.CASCADE, related_name="variables")
     codigo = models.CharField(max_length=12, unique=True)
@@ -46,34 +55,50 @@ class Variable(models.Model):
 
 
 class Indicador(models.Model):
-    """Indicador / KPI medible.
+    """KPI candidato del FRR con su ficha (§2.10, §2.12.3)."""
 
-    Los cortes c1..c4 traducen el valor medido a la escala de niveles 0–4
-    (degenerativo, mitigado, neutro, restaurativo, regenerativo).
-    """
-
-    MAYOR_MEJOR = "MAY"
-    MENOR_MEJOR = "MEN"
-    DIRECCIONES = [
-        (MAYOR_MEJOR, "Mayor es mejor"),
-        (MENOR_MEJOR, "Menor es mejor"),
+    BENEFICIO, COSTO, OBJETIVO = "BEN", "COS", "OBJ"
+    TIPOS = [
+        (BENEFICIO, "Beneficio (mayor es mejor)"),
+        (COSTO, "Costo (menor es mejor)"),
+        (OBJETIVO, "Objetivo (cercanía a un valor ideal)"),
+    ]
+    ROLES = [("NUC", "Núcleo"), ("SAL", "Salvaguarda"), ("COM", "Complementario"), ("HAB", "Habilitador"),
+             ("PEN", "Por definir")]
+    CANDIDATO, ACTIVO, EXCLUIDO = "CAND", "ACT", "EXCL"
+    ESTADOS = [
+        (CANDIDATO, "Candidato (pendiente de validación)"),
+        (ACTIVO, "Activo en la versión operativa"),
+        (EXCLUIDO, "Excluido (decisión documentada)"),
     ]
 
     variable = models.ForeignKey(Variable, on_delete=models.CASCADE, related_name="indicadores")
-    codigo = models.CharField(max_length=16, unique=True)
+    codigo = models.CharField(max_length=16, unique=True, help_text="ID semántico estable: E1…E7, A1…A10, S1…S13, O1…O12")
     nombre = models.CharField(max_length=160)
+    formula = models.CharField(max_length=240, blank=True)
+    componentes = models.TextField("Componentes y cómo obtenerlos", blank=True)
     unidad = models.CharField(max_length=40, blank=True)
-    formula = models.CharField(max_length=240, blank=True, help_text="Fórmula del KPI")
-    direccion = models.CharField(max_length=3, choices=DIRECCIONES, default=MAYOR_MEJOR)
-    peso = models.FloatField(default=1.0, validators=[MinValueValidator(0.0)],
-                             help_text="Peso relativo dentro de su dimensión")
-    c1 = models.FloatField(help_text="Corte nivel 0→1")
-    c2 = models.FloatField(help_text="Corte nivel 1→2 (neutro / balance cero)")
-    c3 = models.FloatField(help_text="Corte nivel 2→3 (restaurativo)")
-    c4 = models.FloatField(help_text="Corte nivel 3→4 (regenerativo)")
-    es_entrada_rna = models.BooleanField(
-        default=True, help_text="Se usa como entrada del modelo de Red Neuronal Artificial"
+    rol = models.CharField(max_length=3, choices=ROLES, default="PEN")
+    estado = models.CharField(max_length=4, choices=ESTADOS, default=CANDIDATO)
+    tipo = models.CharField("Tipo de normalización", max_length=3, choices=TIPOS, default=BENEFICIO)
+    peso = models.FloatField(
+        "Peso w(d,j)", default=1.0, validators=[MinValueValidator(0.0)],
+        help_text="Peso no negativo dentro de la dimensión (candidato, no validado)",
     )
+    ref_l = models.FloatField("L (referencia inferior)", null=True, blank=True)
+    ref_u = models.FloatField("U (referencia superior)", null=True, blank=True)
+    ref_t = models.FloatField("T (objetivo)", null=True, blank=True)
+    ref_h = models.FloatField("H (tolerancia)", null=True, blank=True)
+    fuente_referencia = models.CharField(
+        "Sustento de las referencias", max_length=240, blank=True,
+        help_text="Sin sustento documentado el indicador no se puntúa (§2.5).",
+    )
+    referencia_provisional = models.BooleanField(default=True)
+    equivalencia_v0 = models.CharField(
+        "Correspondencia con la plataforma preliminar", max_length=240, blank=True,
+        help_text="Matriz de correspondencia 17 → 42 (DIREC 1, prioridad 1)",
+    )
+    version_ficha = models.CharField(max_length=10, default="1.0")
     orden = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
@@ -89,43 +114,50 @@ class Indicador(models.Model):
         return self.variable.dimension
 
     @property
-    def cortes(self):
-        return [self.c1, self.c2, self.c3, self.c4]
+    def puntuable(self):
+        """True si existen referencias válidas para normalizar (§2.5)."""
+        if self.tipo == self.OBJETIVO:
+            return self.ref_t is not None and self.ref_h is not None and self.ref_h > 0
+        return self.ref_l is not None and self.ref_u is not None and self.ref_u > self.ref_l
 
-    def nivel_continuo(self, valor):
-        """Traduce un valor medido a la escala 0–4 con interpolación lineal.
-
-        La interpolación conserva resolución para el análisis de sensibilidad;
-        el nivel discreto (piso del continuo) es el que se usa para el veredicto.
-        """
-        cortes = self.cortes
-        if self.direccion == self.MENOR_MEJOR:
-            # Cortes descendentes: se evalúa sobre la escala invertida.
-            valor = -valor
-            cortes = [-c for c in cortes]
-
-        if valor >= cortes[3]:
-            return 4.0
-        if valor < cortes[0]:
-            # Zona degenerativa: se degrada linealmente hacia 0 usando el
-            # ancho del primer tramo como referencia de escala.
-            span = (cortes[1] - cortes[0]) or 1.0
-            return max(0.0, 1.0 + (valor - cortes[0]) / span)
-        for i in range(3):
-            if cortes[i] <= valor < cortes[i + 1]:
-                span = (cortes[i + 1] - cortes[i]) or 1.0
-                return (i + 1) + (valor - cortes[i]) / span
-        return 4.0
-
-    def nivel(self, valor):
-        """Nivel discreto 0–4."""
-        return int(min(4, max(0, int(self.nivel_continuo(valor)))))
+    def normalizar(self, x):
+        """Puntuación z ∈ [0, 1]; None si no hay referencias válidas o valor."""
+        if x is None or not self.puntuable:
+            return None
+        if self.tipo == self.BENEFICIO:
+            z = (x - self.ref_l) / (self.ref_u - self.ref_l)
+        elif self.tipo == self.COSTO:
+            z = (self.ref_u - x) / (self.ref_u - self.ref_l)
+        else:
+            z = 1 - abs(x - self.ref_t) / self.ref_h
+        return min(1.0, max(0.0, z))
 
 
-NIVELES = {
-    0: "Degenerativo",
-    1: "Mitigado",
-    2: "Neutro / sostenible",
-    3: "Restaurativo",
-    4: "Regenerativo",
-}
+class ParametrosFRR(models.Model):
+    """Parámetros de agregación versionados. Solo una versión está activa."""
+
+    version = models.CharField(max_length=12, unique=True, default="1.0")
+    epsilon = models.FloatField(
+        "ε (estabilidad numérica)", default=0.01,
+        help_text="Constante pequeña 0 < ε < 1 del IRR suavizado (§2.5). Requiere análisis de sensibilidad.",
+    )
+    cobertura_minima = models.FloatField(
+        "Cobertura mínima C", default=0.6,
+        help_text="Proporción ponderada mínima de información observada por dimensión. Provisional.",
+    )
+    activo = models.BooleanField(default=True)
+    notas = models.TextField(blank=True)
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-creado"]
+        verbose_name = "parámetros del FRR"
+        verbose_name_plural = "parámetros del FRR"
+
+    def __str__(self):
+        return f"FRR {self.version} · ε={self.epsilon} · Cmin={self.cobertura_minima}"
+
+    @classmethod
+    def vigentes(cls):
+        obj = cls.objects.filter(activo=True).first()
+        return obj or cls.objects.create(version="1.0")

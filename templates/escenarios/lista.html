@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% block titulo %}Escenarios{% endblock %}
+{% load iconos %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Escenarios y sensibilidad</span>{% endblock %}
 
 {% block contenido %}
 <section>
@@ -35,16 +37,16 @@
   <div class="tscroll">
     <table>
       <thead><tr><th>Período</th><th>Escenario</th><th class="num">Factor</th>
-        <th class="num">IRR</th><th class="num">Mín. dim.</th><th>Veredicto</th></tr></thead>
+        <th class="num">IRR</th><th>Clasificación</th><th>Versión</th></tr></thead>
       <tbody>
       {% for e in escenarios %}
         <tr>
           <td>{{ e.periodo }}</td>
           <td>{{ e.get_tipo_display }}</td>
           <td class="num">{{ e.factor }}</td>
-          <td class="num">{{ e.irr|floatformat:4 }}</td>
-          <td class="num">{{ e.minimo_dimensional }}</td>
+          <td class="num">{% if e.irr is None %}—{% else %}{{ e.irr|floatformat:4 }}{% endif %}</td>
           <td>{{ e.veredicto }}</td>
+          <td>{{ e.version|default:"v0" }}</td>
         </tr>
       {% empty %}
         <tr><td colspan="6" class="nota">Todavía no se han guardado escenarios.</td></tr>

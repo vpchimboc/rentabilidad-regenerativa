@@ -53,7 +53,7 @@
     <table>
       <thead><tr>
         <th scope="col">Emprendimiento</th><th scope="col">Sector</th><th scope="col">Ubicación</th>
-        <th scope="col" class="num">Empleados</th><th scope="col" class="num">Ventas (último año)</th>
+        <th scope="col" class="num">Empleados</th><th scope="col" class="num" title="Ventas del período más reciente">Ventas</th>
         <th scope="col" class="num">Ventas / PE</th><th scope="col">Fuente</th><th scope="col"><span class="sr-only">Acciones</span></th>
       </tr></thead>
       <tbody>
@@ -70,10 +70,10 @@
               {% if p.margen_sobre_break_even >= 1 %}<span class="etq exito">{% icono "check" %}{{ p.margen_sobre_break_even|floatformat:2 }}×</span>
               {% else %}<span class="etq alerta">{% icono "triangle-alert" %}{{ p.margen_sobre_break_even|floatformat:2 }}×</span>{% endif %}
             {% else %}<span class="nota">—</span>{% endif %}</td>
-          <td>{% if e.fuente %}{% if e.fuente_url %}<a href="{{ e.fuente_url }}" target="_blank" rel="noopener noreferrer" class="nota">{{ e.fuente|truncatechars:34 }} {% icono "external-link" "ico-sm" "abre en una pestaña nueva" %}</a>{% else %}<span class="nota">{{ e.fuente }}</span>{% endif %}
+          <td style="white-space:nowrap">{% if e.fuente %}{% if e.fuente_url %}<a href="{{ e.fuente_url }}" target="_blank" rel="noopener noreferrer" class="nota" title="{{ e.fuente }}">{% if "B Lab" in e.fuente %}Empresas B{% if "SCVS" in e.fuente %} + SCVS{% endif %}{% elif "SCVS" in e.fuente %}SCVS {{ e.fuente|slice:"-4:" }}{% else %}{{ e.fuente|truncatechars:18 }}{% endif %} {% icono "external-link" "ico-sm" "abre en una pestaña nueva" %}</a>{% else %}<span class="nota">{{ e.fuente }}</span>{% endif %}
               {% else %}<span class="etq neutro">Registro manual</span>{% endif %}</td>
           <td class="acciones-celda">
-            <a class="boton sec peq" href="{% url 'emprendimiento_detalle' e.pk %}">{% icono "eye" "ico-sm" %}Ver</a>
+            <a class="boton sec peq" href="{% url 'emprendimiento_detalle' e.pk %}" title="Ver ficha" aria-label="Ver ficha de {{ e.nombre }}">{% icono "eye" "ico-sm" %}</a>
             {% if p %}<a class="boton sec peq" href="{% url 'evaluar_periodo' p.pk %}">{% icono "calculator" "ico-sm" %}Evaluar</a>{% endif %}
           </td>
         </tr>

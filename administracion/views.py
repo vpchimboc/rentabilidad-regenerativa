@@ -48,11 +48,20 @@ def _alertas_integridad():
     sin_medicion = Periodo.objects.filter(mediciones__isnull=True).count()
     if sin_medicion:
         alertas.append(("info", f"{sin_medicion} períodos no tienen mediciones de indicadores.", "chart-line"))
-    for ind in Indicador.objects.all():
-        cortes = ind.cortes
-        orden = sorted(cortes) if ind.direccion == ind.MAYOR_MEJOR else sorted(cortes, reverse=True)
-        if cortes != orden:
-            alertas.append(("error", f"Los cortes del indicador {ind.codigo} no están ordenados.", "scale"))
+    indicadores = list(Indicador.objects.all())
+    for ind in indicadores:
+        mal_definida = (ind.ref_l is not None and ind.ref_u is not None and ind.ref_u <= ind.ref_l)
+        if mal_definida:
+            alertas.append(("error", f"Las referencias del KPI {ind.codigo} son inválidas (U debe ser mayor que L).", "scale"))
+        elif ind.puntuable and not ind.fuente_referencia:
+            alertas.append(("error", f"El KPI {ind.codigo} tiene referencias L/U sin sustento documentado (§2.5).", "scale"))
+    provisionales = sum(1 for i in indicadores if i.puntuable and i.referencia_provisional)
+    if provisionales:
+        alertas.append(("warning", f"{provisionales} KPI usan referencias L/U provisionales: requieren revisión "
+                        "sectorial o experta.", "scale"))
+    sin_referencia = sum(1 for i in indicadores if not i.puntuable)
+    if indicadores and sin_referencia:
+        alertas.append(("info", f"{sin_referencia} de {len(indicadores)} KPI no tienen referencias y no se puntúan.", "layers"))
     if not ModeloRNA.objects.filter(activo=True).exists():
         alertas.append(("info", "No hay un modelo de red neuronal entrenado.", "network"))
     return alertas

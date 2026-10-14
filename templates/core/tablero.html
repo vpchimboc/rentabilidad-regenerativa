@@ -238,15 +238,15 @@
   </section>
 
   <section class="tarjeta" aria-labelledby="t-ev">
-    <h2 id="t-ev">Últimas evaluaciones del IRR</h2>
+    <h2 id="t-ev">Últimas evaluaciones FRR</h2>
     {% if evaluaciones %}
     <div class="tscroll">
       <table>
-        <thead><tr><th scope="col">Período</th><th scope="col" class="num">IRR</th><th scope="col" class="num">Mín. dim.</th><th scope="col">Veredicto</th></tr></thead>
+        <thead><tr><th scope="col">Período</th><th scope="col">Clasificación</th><th scope="col" class="num">IRR</th><th scope="col">Versión</th></tr></thead>
         <tbody>
         {% for ev in evaluaciones %}
-          <tr><td>{{ ev.periodo }}</td><td class="num">{{ ev.irr|floatformat:3 }}</td>
-            <td class="num">{{ ev.minimo_dimensional }}</td><td>{{ ev.veredicto }}</td></tr>
+          <tr><td>{{ ev.periodo }}</td><td>{{ ev.veredicto }}</td>
+            <td class="num">{% if ev.irr is None %}—{% else %}{{ ev.irr|floatformat:3 }}{% endif %}</td><td>{{ ev.version|default:"v0" }}</td></tr>
         {% endfor %}
         </tbody>
       </table>
@@ -256,8 +256,8 @@
         <h3>Todavía no hay evaluaciones guardadas</h3>
         <p>Abra un emprendimiento, pulse <b>Evaluar</b> en un período y luego <b>Guardar evaluación</b>.</p></div>
     {% endif %}
-    <div class="formula">IRR = Π (D_i / 4)^w_i     con  Σ w_i = 1
-Umbral: califica como regenerativo solo si mín(D_i) ≥ 3</div>
+    <div class="formula">R   = G1 × G2 × G3 × G4 × G5      (salvaguardas)
+IRR = Π (ε + (1−ε)·S(d))^α(d)     (solo con cobertura suficiente)</div>
   </section>
 </div>
 {% endblock %}

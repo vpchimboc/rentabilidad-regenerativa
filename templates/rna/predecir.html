@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% block titulo %}Predicción RNA{% endblock %}
+{% load iconos %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'rna_panel' %}">Red neuronal</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Predicción</span>{% endblock %}
 
 {% block contenido %}
 <section>
@@ -10,7 +12,7 @@
   del modelo en ese punto del espacio de variables.</p>
 </section>
 
-{% if resultado %}
+{% if resultado and resultado.aplicable %}
 <div class="rejilla">
   <section class="tarjeta">
     <p class="eyebrow">Predicción de la RNA</p>
@@ -18,11 +20,11 @@
   </section>
   <section class="tarjeta">
     <p class="eyebrow">Cálculo analítico</p>
-    <p class="cifra">{{ resultado.analitico|floatformat:4 }}</p>
+    <p class="cifra">{% if resultado.analitico is None %}—{% else %}{{ resultado.analitico|floatformat:4 }}{% endif %}</p>
   </section>
   <section class="tarjeta">
     <p class="eyebrow">Error</p>
-    <p class="cifra">{{ resultado.error|floatformat:4 }}</p>
+    <p class="cifra">{% if resultado.error is None %}—{% else %}{{ resultado.error|floatformat:4 }}{% endif %}</p>
     <p class="nota">RMSE del modelo: {{ resultado.modelo.metricas.rmse }}</p>
   </section>
 </div>
@@ -33,7 +35,7 @@
     <div class="tscroll">
       <table>
         <thead><tr><th>Dimensión</th><th>Indicador</th><th>Unidad</th><th class="num">Valor</th>
-          <th class="num">c1</th><th class="num">c4</th></tr></thead>
+          <th class="num">L</th><th class="num">U</th></tr></thead>
         <tbody>
         {% for f in filas %}
           <tr>
@@ -44,8 +46,8 @@
               <input id="{{ f.ind.codigo }}" type="number" step="any" name="{{ f.ind.codigo }}"
                      value="{{ f.valor|default_if_none:'' }}">
             </td>
-            <td class="num nota">{{ f.ind.c1 }}</td>
-            <td class="num nota">{{ f.ind.c4 }}</td>
+            <td class="num nota">{{ f.ind.ref_l|default_if_none:"—" }}</td>
+            <td class="num nota">{{ f.ind.ref_u|default_if_none:"—" }}</td>
           </tr>
         {% endfor %}
         </tbody>

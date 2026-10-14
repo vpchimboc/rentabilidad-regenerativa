@@ -1,188 +1,283 @@
-"""Motor de cálculo del Índice de Rentabilidad Regenerativa (IRR).
+"""Motor de cálculo del FRR 1.0 (especificación Fase 2, §2.4–2.5 y §2.12.2).
 
-Reglas de agregación
---------------------
-1. Cada indicador se traduce a la escala 0–4 mediante sus cortes.
-2. Dentro de una dimensión los indicadores se promedian de forma ponderada
-   (aritmética): son sustituibles entre sí porque miden el mismo capital.
-3. Entre dimensiones la agregación es GEOMÉTRICA ponderada: no compensatoria.
-   Si una dimensión colapsa (nivel 0), el índice se anula.
-4. Regla de umbral: ningún emprendimiento califica como regenerativo si su
-   mínimo dimensional discreto es menor a 3.
+Dos niveles:
+1. Condiciones habilitantes y salvaguardas G1–G5 → R = G1×G2×G3×G4×G5.
+   Si alguna Gk es desconocida, R es «indeterminado» (nunca 0 por falta de datos).
+2. Puntuaciones descriptivas, solo con cobertura suficiente:
+   z      = normalización acotada [0, 1] con referencias L/U o T/H del indicador
+   S(d)   = Σ w·z / Σ w            (KPI observados y puntuables de la dimensión d)
+   C(d)   = Σ w(observados) / Σ w(aplicables)   (NA documentados fuera del denominador)
+   IRR    = Π (ε + (1−ε)·S(d))^α(d)              (Σ α = 1)
+   IRR₀   = Π S(d)^α(d)                          (alternativa sin suavizado)
+El índice solo se publica junto con G1–G5 y la cobertura C.
+
+Clasificación (§2.2): (a) información insuficiente · (b) inviabilidad económica ·
+(c) viabilidad sin evidencia regenerativa · (d) desempeño sostenible o de transición ·
+(e) regeneración verificable.
 """
 
-import math
+from framework.models import Dimension, Indicador, ParametrosFRR
 
-from framework.models import NIVELES, Dimension
+CLASIFICACIONES = {
+    "a": ("Información insuficiente", "vacio"),
+    "b": ("Inviabilidad económica", "l0"),
+    "c": ("Viabilidad sin evidencia regenerativa", "l2"),
+    "d": ("Desempeño sostenible o de transición", "l3"),
+    "e": ("Regeneración verificable", "l4"),
+}
+NOMBRES_G = {
+    "G1": "Viabilidad económica",
+    "G2": "No daño social crítico",
+    "G3": "Resultado ambiental positivo",
+    "G4": "Trazabilidad y cobertura",
+    "G5": "Persistencia temporal",
+}
+INCREMENTO_ELASTICIDAD = 0.10
 
-UMBRAL_CALIFICACION = 3
+
+def cargar_dimensiones():
+    return list(Dimension.objects.prefetch_related("variables__indicadores").all())
 
 
-def _discreto(nivel):
-    """Piso del nivel continuo, tolerante al ruido de coma flotante (2.9999999 → 3)."""
-    return int(min(4, max(0, math.floor(nivel + 1e-9))))
+def _indicadores_aplicables(dim):
+    """KPI de la versión operativa; si aún no hay selección, todos los candidatos no excluidos."""
+    todos = [i for v in dim.variables.all() for i in v.indicadores.all() if i.estado != Indicador.EXCLUIDO]
+    activos = [i for i in todos if i.estado == Indicador.ACTIVO]
+    return activos or todos
 
 
-def _pesos_normalizados(dimensiones):
-    total = sum(d.peso for d in dimensiones) or 1.0
-    return {d.id: d.peso / total for d in dimensiones}
+def _alfas(dimensiones):
+    total = sum(max(d.peso, 0) for d in dimensiones) or 1.0
+    return {d.codigo: max(d.peso, 0) / total for d in dimensiones}
 
 
-def evaluar(mediciones, dimensiones=None):
-    """Calcula el IRR a partir de un dict {codigo_indicador: valor}.
+def _agregar(puntajes, alfas, epsilon):
+    """IRR suavizado e IRR₀ a partir de {código: S}. None si falta alguna dimensión."""
+    if any(s is None for s in puntajes.values()):
+        return None, None
+    irr, irr0 = 1.0, 1.0
+    for cod, s in puntajes.items():
+        a = alfas[cod]
+        irr *= (epsilon + (1 - epsilon) * s) ** a
+        irr0 *= (s ** a) if s > 0 else (0.0 if a > 0 else 1.0)
+    return irr, irr0
 
-    Devuelve un diccionario con el detalle completo del cálculo, apto para
-    renderizar en pantalla, guardar como JSON o alimentar la RNA.
+
+def _g(valor, origen, detalle):
+    return {"valor": valor, "origen": origen, "detalle": detalle}
+
+
+def evaluar(mediciones, dimensiones=None, *, periodo=None, no_aplicables=(), salvaguardas=None, parametros=None):
+    """Evalúa un conjunto de mediciones {código KPI: valor observado}.
+
+    `periodo` (opcional) aporta ventas y costos para G1 (E1), las fuentes para G4 y
+    el historial para G5. `salvaguardas` son verificaciones manuales {G: 0/1}.
     """
-    if dimensiones is None:
-        dimensiones = list(
-            Dimension.objects.prefetch_related("variables__indicadores").all()
-        )
+    dimensiones = dimensiones if dimensiones is not None else cargar_dimensiones()
+    parametros = parametros or ParametrosFRR.vigentes()
+    eps, cmin = parametros.epsilon, parametros.cobertura_minima
+    alfas = _alfas(dimensiones)
+    no_aplicables = set(no_aplicables)
+    manuales = dict(salvaguardas or {})
+    derivados = set()
+    if periodo is not None:
+        no_aplicables |= periodo.no_aplicables()
+        manuales = {**periodo.salvaguardas_manuales(), **manuales}
+        # E1 = (V − PE)/V depende solo de ventas y costos del período: se deriva si no se registró.
+        if mediciones.get("E1") is None and periodo.margen_seguridad is not None:
+            mediciones = {**mediciones, "E1": periodo.margen_seguridad}
+            derivados.add("E1")
 
-    # Solo agregan las dimensiones con al menos una medición. Una dimensión sin
-    # datos no es una dimensión degenerativa: se informa como faltante y sus
-    # pesos se redistribuyen entre las medidas, pero el caso no puede calificar.
-    medidas = [
-        dim for dim in dimensiones
-        if any(
-            mediciones.get(ind.codigo) is not None
-            for var in dim.variables.all() for ind in var.indicadores.all()
-        )
-    ]
-    pesos = _pesos_normalizados(medidas)
-    detalle_dimensiones = []
-    producto = 1.0
-    suma_aritmetica = 0.0
-    hay_datos = bool(medidas)
-
+    detalle_dims, puntajes = [], {}
     for dim in dimensiones:
-        indicadores = [
-            ind for var in dim.variables.all() for ind in var.indicadores.all()
-        ]
-        filas, suma_pesos, suma_niveles = [], 0.0, 0.0
-        for ind in indicadores:
-            if ind.codigo not in mediciones or mediciones[ind.codigo] is None:
-                filas.append({"indicador": ind, "valor": None, "nivel": None})
-                continue
-            valor = float(mediciones[ind.codigo])
-            nivel_c = ind.nivel_continuo(valor)
-            filas.append(
-                {
-                    "indicador": ind,
-                    "valor": valor,
-                    "nivel": round(nivel_c, 2),
-                    "nivel_discreto": _discreto(nivel_c),
-                    "etiqueta": NIVELES[_discreto(nivel_c)],
-                }
-            )
-            suma_pesos += ind.peso
-            suma_niveles += ind.peso * nivel_c
+        aplicables = [i for i in _indicadores_aplicables(dim) if i.codigo not in no_aplicables]
+        filas, peso_obs, peso_apl, suma_wz, suma_w = [], 0.0, 0.0, 0.0, 0.0
+        for ind in aplicables:
+            x = mediciones.get(ind.codigo)
+            peso_apl += ind.peso
+            z = ind.normalizar(x) if x is not None else None
+            if x is not None:
+                peso_obs += ind.peso
+            if z is not None:
+                suma_wz += ind.peso * z
+                suma_w += ind.peso
+            filas.append({
+                "indicador": ind, "valor": x, "z": z,
+                "estado": "OBS" if x is not None else "ND",
+                "puntuable": ind.puntuable, "derivado": ind.codigo in derivados,
+            })
+        for codigo in sorted(no_aplicables):
+            ind = next((i for v in dim.variables.all() for i in v.indicadores.all() if i.codigo == codigo), None)
+            if ind is not None:
+                filas.append({"indicador": ind, "valor": None, "z": None, "estado": "NA", "puntuable": ind.puntuable, "derivado": False})
 
-        sin_dato = dim.id not in pesos
-        nivel_dim = (suma_niveles / suma_pesos) if suma_pesos else 0.0
-        w = pesos.get(dim.id, 0.0)
-        ratio = nivel_dim / 4.0
-        if not sin_dato:
-            producto *= ratio ** w if ratio > 0 else 0.0
-            suma_aritmetica += w * ratio
+        cobertura = (peso_obs / peso_apl) if peso_apl > 0 else 0.0
+        s = (suma_wz / suma_w) if suma_w > 0 else None
+        suficiente = cobertura >= cmin and s is not None
+        puntajes[dim.codigo] = s if suficiente else None
+        if not peso_obs:
+            motivo = "Sin mediciones observadas"
+        elif cobertura < cmin:
+            motivo = f"Cobertura {cobertura:.0%} menor al mínimo {cmin:.0%}"
+        elif s is None:
+            motivo = "Indicadores observados sin referencias L/U justificadas"
+        else:
+            motivo = ""
+        detalle_dims.append({
+            "dimension": dim, "alfa": round(alfas[dim.codigo], 4),
+            "S": None if s is None else round(s, 4), "C": round(cobertura, 4),
+            "suficiente": suficiente, "motivo": motivo, "filas": filas,
+            "n_obs": sum(1 for f in filas if f["estado"] == "OBS"),
+            "n_aplicables": len(aplicables),
+        })
 
-        detalle_dimensiones.append(
-            {
-                "dimension": dim,
-                "sin_dato": sin_dato,
-                "peso": round(w, 4),
-                "nivel": round(nivel_dim, 3),
-                "nivel_discreto": _discreto(nivel_dim),
-                "etiqueta": NIVELES[_discreto(nivel_dim)],
-                "ratio": round(ratio, 4),
-                "aporte": round(ratio ** w, 4) if ratio > 0 and not sin_dato else 0.0,
-                "filas": filas,
-            }
-        )
-
-    con_dato = [d for d in detalle_dimensiones if not d["sin_dato"]]
-    sin_dato = [d["dimension"].codigo for d in detalle_dimensiones if d["sin_dato"]]
-    irr = producto if hay_datos else 0.0
-    minimo = min((d["nivel_discreto"] for d in con_dato), default=0)
-    cuello = min(con_dato, key=lambda d: d["nivel"]) if con_dato else None
-
-    if not hay_datos:
-        veredicto, clase = "Sin datos suficientes", "vacio"
-    elif minimo == 0:
-        veredicto, clase = "Índice anulado — dimensión degenerativa", "l0"
-    elif sin_dato:
-        veredicto, clase = "Evaluación incompleta — dimensiones sin dato", "vacio"
-    elif minimo < UMBRAL_CALIFICACION:
-        veredicto, clase = "No califica como regenerativo", "l2"
-    elif minimo == 3:
-        veredicto, clase = "Regenerativo verificable", "l3"
+    # ---------- salvaguardas G1–G5 ----------
+    g = {}
+    e1 = mediciones.get("E1")
+    if e1 is None and periodo is not None:
+        e1 = periodo.margen_seguridad
+    if "G1" in manuales:
+        g["G1"] = _g(manuales["G1"], "verificación", "Verificación documentada")
+    elif e1 is None:
+        g["G1"] = _g(None, "regla", "Sin ventas y costos conciliados para calcular el punto de equilibrio")
     else:
-        veredicto, clase = "Regenerativo pleno", "l4"
+        texto = f"Margen de seguridad E1 = {e1:.1%}"
+        liquidez = mediciones.get("E4")
+        if liquidez is not None and liquidez < 1:
+            texto += f" · revisar liquidez: razón corriente {liquidez:.2f} < 1"
+        g["G1"] = _g(1 if e1 >= 0 else 0, "regla", texto)
+
+    g["G2"] = (_g(manuales["G2"], "verificación", "Verificación documentada") if "G2" in manuales else
+               _g(None, "pendiente", "Requiere verificación de seguridad, derechos laborales y quejas (S4, S8, S9)"))
+
+    a10 = mediciones.get("A10")
+    if "G3" in manuales:
+        g["G3"] = _g(manuales["G3"], "verificación", "Verificación documentada")
+    elif a10 is None:
+        g["G3"] = _g(None, "regla", "Sin resultado ecológico neto (A10) frente a línea base")
+    else:
+        g["G3"] = _g(1 if a10 > 0 else 0, "regla", f"A10 = {a10:g} (Y_t − Y_0)")
+
+    if "G4" in manuales:
+        g["G4"] = _g(manuales["G4"], "verificación", "Verificación documentada")
+    else:
+        insuficientes = [d["dimension"].codigo for d in detalle_dims if d["C"] < cmin]
+        sin_fuente = 0
+        if periodo is not None:
+            sin_fuente = periodo.mediciones.filter(estado="OBS", fuente="").count()
+        if insuficientes:
+            g["G4"] = _g(0, "regla", "Faltantes críticos: cobertura insuficiente en " + ", ".join(insuficientes))
+        elif sin_fuente:
+            g["G4"] = _g(0, "regla", f"{sin_fuente} mediciones observadas sin fuente")
+        else:
+            g["G4"] = _g(1, "regla", "Cobertura suficiente en D1–D4 y fuentes registradas")
+
+    if "G5" in manuales:
+        g["G5"] = _g(manuales["G5"], "verificación", "Verificación documentada")
+    elif periodo is not None:
+        n = periodo.emprendimiento.periodos.filter(mediciones__estado="OBS").distinct().count()
+        g["G5"] = (_g(1, "regla", f"{n} períodos con mediciones comparables") if n >= 2 else
+                   _g(None, "regla", "En revisión: una sola medición temporal"))
+    else:
+        g["G5"] = _g(None, "regla", "Sin historial de períodos")
+
+    valores_g = [x["valor"] for x in g.values()]
+    if any(v == 0 for v in valores_g):
+        r = 0
+    elif any(v is None for v in valores_g):
+        r = None
+    else:
+        r = 1
+
+    irr, irr0 = _agregar(puntajes, alfas, eps)
+    media = (sum(alfas[c] * s for c, s in puntajes.items()) if irr is not None else None)
+
+    # ---------- clasificación ----------
+    g1, g2 = g["G1"]["valor"], g["G2"]["valor"]
+    todas_suficientes = all(d["suficiente"] for d in detalle_dims)
+    if g1 is None:
+        clase = "a"
+    elif g1 == 0:
+        clase = "b"
+    elif r == 1:
+        clase = "e"
+    elif todas_suficientes and g2 != 0:
+        clase = "d"
+    else:
+        clase = "c"
+    veredicto, css = CLASIFICACIONES[clase]
+    if g2 == 0:
+        veredicto += " · salvaguarda social incumplida"
+
+    con_s = [d for d in detalle_dims if d["S"] is not None]
+    cuello = min(con_s, key=lambda d: d["S"])["dimension"].codigo if con_s else None
 
     return {
-        "irr": round(irr, 4),
-        "media_aritmetica": round(suma_aritmetica, 4),
-        "penalizacion": round(irr - suma_aritmetica, 4),
-        "minimo_dimensional": minimo,
-        "veredicto": veredicto,
-        "clase": clase,
-        "cuello_de_botella": cuello["dimension"].codigo if cuello else None,
-        "incompleto": hay_datos and bool(sin_dato),
-        "dimensiones_sin_dato": sin_dato,
-        "dimensiones": detalle_dimensiones,
+        "version": parametros.version, "epsilon": eps, "cobertura_minima": cmin,
+        "dimensiones": detalle_dims,
+        "salvaguardas": g,
+        "R": r, "R_texto": {1: "Elegible (R = 1)", 0: "No elegible (R = 0)", None: "Indeterminado"}[r],
+        "irr": None if irr is None else round(irr, 4),
+        "irr0": None if irr0 is None else round(irr0, 4),
+        "media_aritmetica": None if media is None else round(media, 4),
+        "irr_calculable": irr is not None,
+        "motivo_irr": "" if irr is not None else "IRR no calculable: alguna dimensión no alcanza la cobertura mínima o carece de referencias",
+        "clasificacion": clase, "veredicto": veredicto, "clase": css,
+        "cuello_de_botella": cuello,
+        "cobertura_global": round(sum(d["C"] for d in detalle_dims) / len(detalle_dims), 4) if detalle_dims else 0.0,
     }
 
 
-def elasticidad(mediciones, dimensiones=None):
-    """Ganancia de IRR al subir un nivel completo cada dimensión (fase 4).
+def elasticidad(mediciones, dimensiones=None, **kwargs):
+    """Ganancia de IRR si la puntuación S de cada dimensión aumentara 0,10 (§2.5, Fase 4)."""
+    base = evaluar(mediciones, dimensiones, **kwargs)
+    filas = []
+    if base["irr_calculable"]:
+        alfas = {d["dimension"].codigo: d["alfa"] for d in base["dimensiones"]}
+        puntajes = {d["dimension"].codigo: d["S"] for d in base["dimensiones"]}
+        for d in base["dimensiones"]:
+            cod = d["dimension"].codigo
+            if d["S"] >= 1:
+                filas.append({"dimension": d["dimension"], "S": d["S"], "objetivo": 1.0, "ganancia": None})
+                continue
+            alt = dict(puntajes, **{cod: min(1.0, d["S"] + INCREMENTO_ELASTICIDAD)})
+            irr_alt, _ = _agregar(alt, alfas, base["epsilon"])
+            filas.append({
+                "dimension": d["dimension"], "S": d["S"], "objetivo": round(alt[cod], 4),
+                "ganancia": round(irr_alt - base["irr"], 4), "es_cuello": cod == base["cuello_de_botella"],
+            })
+        filas.sort(key=lambda f: (f["ganancia"] is None, -(f["ganancia"] or 0)))
+    return base, filas
 
-    Responde a la pregunta operativa: ¿dónde conviene intervenir primero?
-    """
-    base = evaluar(mediciones, dimensiones)
-    resultados = []
-    for det in base["dimensiones"]:
-        nivel_actual = det["nivel"]
-        if det["sin_dato"]:
-            resultados.append({"dimension": det["dimension"], "ganancia": None, "nivel_actual": None})
-            continue
-        if nivel_actual >= 4:
-            resultados.append({"dimension": det["dimension"], "ganancia": None, "nivel_actual": 4.0})
-            continue
-        niveles = {d["dimension"].codigo: d["nivel"] for d in base["dimensiones"]}
-        niveles[det["dimension"].codigo] = min(4.0, nivel_actual + 1.0)
-        irr_alt = _irr_desde_niveles(niveles, base["dimensiones"])
-        resultados.append(
+
+def irr_desde_puntajes(puntajes, dimensiones=None, epsilon=None):
+    """IRR a partir de {código: S ∈ [0,1]} (uso en simulación y pruebas)."""
+    dimensiones = dimensiones if dimensiones is not None else list(Dimension.objects.all())
+    epsilon = ParametrosFRR.vigentes().epsilon if epsilon is None else epsilon
+    irr, _ = _agregar({d.codigo: puntajes.get(d.codigo) for d in dimensiones}, _alfas(dimensiones), epsilon)
+    return irr
+
+
+def serializar(resultado):
+    """Versión JSON del resultado, con la configuración usada (trazabilidad de versiones)."""
+    return {
+        "version": resultado["version"], "epsilon": resultado["epsilon"],
+        "cobertura_minima": resultado["cobertura_minima"],
+        "R": resultado["R"],
+        "salvaguardas": {k: {"valor": v["valor"], "origen": v["origen"], "detalle": v["detalle"]}
+                         for k, v in resultado["salvaguardas"].items()},
+        "dimensiones": [
             {
-                "dimension": det["dimension"],
-                "nivel_actual": round(nivel_actual, 2),
-                "nivel_objetivo": round(min(4.0, nivel_actual + 1.0), 2),
-                "ganancia": round(irr_alt - base["irr"], 4),
-                "es_cuello": det["dimension"].codigo == base["cuello_de_botella"],
+                "codigo": d["dimension"].codigo, "alfa": d["alfa"], "S": d["S"], "C": d["C"],
+                "suficiente": d["suficiente"],
+                "indicadores": [
+                    {"codigo": f["indicador"].codigo, "estado": f["estado"], "valor": f["valor"],
+                     "z": None if f["z"] is None else round(f["z"], 4),
+                     "tipo": f["indicador"].tipo, "L": f["indicador"].ref_l, "U": f["indicador"].ref_u,
+                     "T": f["indicador"].ref_t, "H": f["indicador"].ref_h, "peso": f["indicador"].peso}
+                    for f in d["filas"] if f["estado"] != "ND"
+                ],
             }
-        )
-    resultados.sort(key=lambda r: (r["ganancia"] is None, -(r["ganancia"] or 0)))
-    return base, resultados
-
-
-def _irr_desde_niveles(niveles_por_codigo, detalle_dimensiones):
-    """IRR recalculado a partir de niveles de dimensión ya conocidos."""
-    producto = 1.0
-    for det in detalle_dimensiones:
-        if det["sin_dato"]:
-            continue
-        nivel = niveles_por_codigo[det["dimension"].codigo]
-        ratio = nivel / 4.0
-        producto *= ratio ** det["peso"] if ratio > 0 else 0.0
-    return producto
-
-
-def irr_desde_niveles(niveles_por_codigo, dimensiones=None):
-    """Versión pública: recibe {codigo_dimension: nivel 0-4} y devuelve el IRR."""
-    if dimensiones is None:
-        dimensiones = list(Dimension.objects.all())
-    pesos = _pesos_normalizados(dimensiones)
-    producto = 1.0
-    for dim in dimensiones:
-        ratio = niveles_por_codigo.get(dim.codigo, 0.0) / 4.0
-        producto *= ratio ** pesos[dim.id] if ratio > 0 else 0.0
-    return producto
+            for d in resultado["dimensiones"]
+        ],
+    }

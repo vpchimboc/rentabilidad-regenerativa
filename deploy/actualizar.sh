@@ -80,8 +80,9 @@ manage migrate --noinput
 manage cargar_framework
 
 # Si cambió el dataset público, se reimporta (actualiza sin duplicar).
-if grep -q '^emprendimientos/datos/emprendimientos_ecuador.csv' <<<"$CAMBIADOS"; then
-  verde "El dataset de emprendimientos cambió: reimportando"
+# Con --forzar también se aplica: cubre el caso de un `git pull` hecho a mano antes del script.
+if grep -q '^emprendimientos/datos/emprendimientos_ecuador.csv' <<<"$CAMBIADOS" || [[ "$FORZAR" == "--forzar" ]]; then
+  verde "Reimportando y depurando el dataset de emprendimientos"
   manage importar_emprendimientos
   manage limpiar_datos --aplicar
   manage calcular_referencias --aplicar

@@ -158,6 +158,11 @@ class Medicion(models.Model):
             else:
                 self.valor, self.estado = None, self.ND
                 self.observaciones = self.observaciones or "Denominador cero o inválido"
+        # Anclas matemáticas 0–1 (MAT) solo valen para fracciones parte/total coherentes (Anexo técnico §3).
+        if (self.estado == self.OBS and self.valor is not None
+                and self.indicador.tipo_fuente_referencia == "MAT" and not 0 <= self.valor <= 1):
+            self.valor, self.estado = None, self.ND
+            self.observaciones = self.observaciones or "Proporción fuera de [0, 1]: numerador mayor que el denominador"
         if self.estado == self.OBS and self.valor is None:
             self.estado = self.ND
         if not self.unidad:

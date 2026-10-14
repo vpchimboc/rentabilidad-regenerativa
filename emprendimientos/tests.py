@@ -1,3 +1,4 @@
+from io import StringIO
 """Pruebas de break-even, escenarios y vistas."""
 
 from django.core.management import call_command
@@ -269,3 +270,48 @@ class VistasTest(TestCase):
         ronda.refresh_from_db()
         self.assertTrue(hasattr(ronda, "resultado"))
         self.assertGreater(ronda.resultado.s_cvi, 0)
+
+
+class MatrizMedicionesTest(TestCase):
+    """Carga de D2–D4 desde la matriz, sin crear empresas ni imputar ceros."""
+
+    def setUp(self):
+        call_command("cargar_framework", stdout=StringIO())
+        from framework.models import Indicador
+        Indicador.objects.filter(codigo__in=["S1", "A4"]).update(
+            ref_l=0, ref_u=1, tipo_fuente_referencia="MAT", fuente_referencia="Dominio [0,1]")
+        emp = Emprendimiento.objects.create(nombre="Empresa X", ruc="0190000000001")
+        self.periodo = Periodo.objects.create(emprendimiento=emp, anio=2025, ventas=100)
+
+    def _csv(self, filas):
+        import tempfile
+        from pathlib import Path
+        ruta = Path(tempfile.mkdtemp()) / "m.csv"
+        ruta.write_text("id_periodo;ruc;anio;codigo;estado;valor;numerador;denominador;fuente;evidencia\n"
+                        + "\n".join(filas), encoding="utf-8-sig")
+        return ruta
+
+    def test_importa_por_id_y_ruc_sin_ceros(self):
+        from emprendimientos.models import Medicion
+        p = self.periodo.pk
+        ruta = self._csv([
+            f"{p};;;S1;OBS;;8;10;Memoria 2025;",
+            ";0190000000001;2025;A1;ND;;;;;No publica consumo",
+            f"{p};;;S2;;;;;;",                       # vacía: se ignora
+            f"{p};;;A4;OBS;;12;10;Factura;",           # proporción > 1 → ND
+        ])
+        call_command("matriz_mediciones", "importar", str(ruta), stdout=StringIO())
+        self.assertFalse(Medicion.objects.exists())   # simulación: no guarda
+        call_command("matriz_mediciones", "importar", str(ruta), aplicar=True, stdout=StringIO())
+        m = {x.indicador.codigo: x for x in Medicion.objects.select_related("indicador")}
+        self.assertAlmostEqual(m["S1"].valor, 0.8)
+        self.assertEqual((m["A1"].estado, m["A1"].valor), ("ND", None))
+        self.assertNotIn("S2", m)
+        self.assertEqual((m["A4"].estado, m["A4"].valor), ("ND", None))
+        self.assertEqual(Emprendimiento.objects.count(), 1)
+
+    def test_rechaza_empresa_no_registrada_y_obs_sin_fuente(self):
+        from django.core.management.base import CommandError
+        for fila in [";0999999999001;2025;S1;OBS;0,5;;;Fuente;", f"{self.periodo.pk};;;S1;OBS;0,5;;;;"]:
+            with self.assertRaises(CommandError):
+                call_command("matriz_mediciones", "importar", str(self._csv([fila])), stdout=StringIO())

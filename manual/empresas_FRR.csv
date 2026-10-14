@@ -1,0 +1,93 @@
+﻿id_emprendimiento;id_periodo;ruc;empresa;sector;provincia;ciudad;ciiu;empleados;anio;fuente;url_verificacion
+103;76;0195094748001;ACCESSNET S.A.S.;Tecnológico;AZUAY;Azuay;J6110.01;4;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+58;31;0195131740001;AGREE S.A.S. B.I.C.;Agroindustrial;AZUAY;Azuay;A0141.02;2;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+59;32;0195088756001;AGRIAL-AGRICOLA S.A.S.;Agroindustrial;AZUAY;Azuay;A0150.00;4;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+53;26;0195116458001;AGRICOLA OCHOA AVILA AGROA S.A.S.;Agroindustrial;AZUAY;Azuay;A0111.12;4;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+54;27;0195136688001;AGROEMBRION S.A.S.;Agroindustrial;AZUAY;Azuay;A0150.00;3;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+88;61;0195103925001;ALIMENTOS Y SERVICIOS ESCONDITE ALISE S.A.S.;Servicios;AZUAY;Azuay;I5610.01;4;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+122;95;0190491102001;ALLQU S.A.S.;Servicios;AZUAY;Azuay;M7500.02;2;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+104;77;0195112452001;APUKAYECUADOR S.A.S.;Tecnológico;AZUAY;Azuay;J6311.01;2;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+46;19;1793028926001;AROMAVIDA;Manufacturero;PICHINCHA;Quito;C2029.11;7;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/aromavida/
+45;18;1792487242001;ARTHOTELES ECUADOR S.A.;Servicios;AZUAY;Cuenca;N8230.00;81;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/arthoteles-ecuador-sa/
+120;93;0195095671001;ASESORIA Y SERVICIOS VIZZMER S.A.S.;Servicios;AZUAY;Azuay;M7020.04;8;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+74;47;0195131252001;ASIATRUCKS S.A.S.;Comercial;AZUAY;Azuay;G4510.01;13;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+44;17;0190485471001;ATUK;Servicios;AZUAY;Cuenca;M7490.23;6;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/atuk-ca-ltda/
+43;16;1792697921001;AWA-NUTRITION S.A.;Comercial;PICHINCHA;Quito;G4610.07;5;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/awa-nutrition-sa/
+108;81;0195092966001;AXONSMARTTECHNOLOGIES S.A.S.;Tecnológico;AZUAY;Azuay;J6311.01;2;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+47;20;1792634466001;Alimentarte S.A. BIC;Manufacturero;PICHINCHA;Quito;C1030.15;5;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/alimentarte-sa-bic/
+57;30;0190504360001;BALSAMORWOOD S.A.S.;Agroindustrial;AZUAY;Azuay;A0150.00;1;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+118;91;0190493687001;CAPITAL ONE CATO S.A.S.;Servicios;AZUAY;Azuay;M7490.29;1;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+116;89;0195122032001;CAPITALSERVICE S.A.S.;Servicios;AZUAY;Azuay;M7010.00;2;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+81;54;0195127379001;CASA DEL REPUESTO JAPONÉS S.A.S.;Comercial;AZUAY;Azuay;G4530.00;4;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+72;45;0190503461001;CBX MATERIALS S.A.S.;Manufacturero;AZUAY;Azuay;C2393.04;6;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+61;34;0195091870001;CEMIX ECUADOR S.A.S.;Manufacturero;AZUAY;Azuay;C2011.13;42;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+66;39;0195151921001;CHARLIESCREAM S.A.S.;Manufacturero;AZUAY;Azuay;C1050.04;2;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+60;33;0190498417001;CLANDESTINO-AGRO S.A.S.;Agroindustrial;AZUAY;Azuay;A0150.00;5;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+112;85;0195097658001;CORPOCELL-EC S.A.S.;Tecnológico;AZUAY;Azuay;J6190.05;18;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+85;58;0195122598001;CORPONEGOCIOS CORNEG S.A.S.;Comercial;AZUAY;Azuay;G4510.01;3;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+67;40;0190506878001;CORPORACIÓN INDUSTRIAL DELMEXS CORINDEL S.A.S.;Manufacturero;AZUAY;Azuay;C1071.09;47;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+40;15;1792112478001;CarpeDM Adventures;Servicios;PICHINCHA;Quito;N7911.00;4;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/carpedm-adventures/
+109;82;0195098123001;D3TECNOLOGIA SMART SOLUTIONS S.A.S.;Tecnológico;AZUAY;Azuay;J6311.03;3;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+63;36;0190504182001;DICAL S.A.S.;Manufacturero;AZUAY;Azuay;C1410.01;19;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+117;90;0195148635001;DISAUSTRO S.A.S.;Servicios;AZUAY;Azuay;M7500.01;11;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+91;64;0195104141001;ECUAGARDENS S.A.S.;Servicios;AZUAY;Azuay;I5510.01;34;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+92;65;0190492206001;EMPRESA HOTELERA DURAN VINTIMILLA EHDV S.A.S.;Servicios;AZUAY;Azuay;I5510.01;14;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+36;14;1793175775001;ESGVALUE SAS BIC;Servicios;PICHINCHA;Quito;M6920.02;4;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/esgvalue-sas-bic/
+114;87;0195166153001;ESTUDIO JURIDICO MALDONADO & CASTILLO ESTUDIOMYCJURIDICO S.A.S.;Servicios;AZUAY;Azuay;M7490.21;3;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+84;57;0190400336001;EXILASER CENTRO OFTALMOLOGICO S.A.S.;Comercial;AZUAY;Azuay;G4773.12;24;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+113;86;0195103283001;FABIAN PINTADO S.A.S.;Servicios;AZUAY;Azuay;M7490.24;48;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+35;13;1792956005001;FAVORITARECICLA S.A.;Manufacturero;PICHINCHA;Sangolquí;E3811.00;69;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/gira/
+69;42;0195116946001;FOGA S.A.S.;Manufacturero;AZUAY;Azuay;C2750.03;5;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+78;51;0190492281001;FRANKICIAS DEL ECUADOR S.A.S.;Comercial;AZUAY;Azuay;G4610.01;6;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+100;73;0190430863001;GIFTPOINTSOFT S.A.S.;Tecnológico;AZUAY;Azuay;J6201.01;17;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+62;35;0195120021001;GONZALEZ JC E HIJOS CORP GONMARCORP S.A.S.;Manufacturero;AZUAY;Azuay;C1392.06;7;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+124;97;0195092591001;HABITTASAS S.A.S.;Servicios;AZUAY;Azuay;M7110.11;7;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+90;63;0195094608001;HACIENDA SUIZA S.A.S.;Servicios;AZUAY;Azuay;I5610.01;32;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+111;84;0195092230001;HAUS-IN S.A.S.;Tecnológico;AZUAY;Azuay;J5811.01;2;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+82;55;0190497658001;IDPP PRO PARTS S.A.S.;Comercial;AZUAY;Azuay;G4540.01;20;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+97;70;0190501795001;IKARO SERVICIOS GASTRONÓMICOS S.A.S.;Servicios;AZUAY;Azuay;I5610.01;18;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+73;46;0195097501001;IMLA S.A.S.;Manufacturero;AZUAY;Azuay;C2511.03;8;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+75;48;0195091714001;IMPORTADORA-AUSTROFIL S.A.S.;Comercial;AZUAY;Azuay;G4530.00;42;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+64;37;0195132641001;IMSALE S.A.S.;Manufacturero;AZUAY;Azuay;C2220.11;28;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+110;83;0190496236001;INNOVA-CONSULTING S.A.S.;Tecnológico;AZUAY;Azuay;J6202.10;2;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+28;12;1792381053001;IPEGES;Servicios;PICHINCHA;Quito;M7490.23;84;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/ipeges/
+27;11;1792961874001;J3M Global;Comercial;PICHINCHA;Pichincha;D3510.01;9;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/j3-m-global/
+86;59;0195104573001;LAAM S.A.S.;Comercial;AZUAY;Azuay;G4610.09;4;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+55;28;0190500837001;LACTOAZUAY S.A.S.;Agroindustrial;AZUAY;Azuay;A0141.02;9;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+56;29;0195132976001;LALABOR S.A.S.;Agroindustrial;AZUAY;Azuay;A0141.01;3;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+102;75;0190495957001;LAVICORE S.A.S.;Tecnológico;AZUAY;Azuay;J6110.01;2;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+106;79;0190496163001;LESCOMM S.A.S.;Tecnológico;AZUAY;Azuay;J6190.09;11;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+24;10;0791825180001;LatBio S.A.;Agroindustrial;EL ORO;Machala;A0122.01;7;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/latbio/
+77;50;0195143455001;MAQUINAS Y TRACTORES M&T-MTS S.A.S.;Comercial;AZUAY;Azuay;G4659.22;3;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+107;80;0190496171001;MC TELEMATICS-GROUP S.A.S.;Tecnológico;AZUAY;Azuay;J6190.01;6;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+93;66;0195096791001;MI ESCONDITE S.A.S.;Servicios;AZUAY;Azuay;I5621.00;19;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+68;41;0190493091001;MOBCARLINEAA1 S.A.S.;Manufacturero;AZUAY;Azuay;C3100.01;4;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+83;56;0190507122001;MOTOPRAISE S.A.S.;Comercial;AZUAY;Azuay;G4540.01;18;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+76;49;0993375482001;NEOCAMIONES S.A.S.;Comercial;AZUAY;Azuay;G4510.01;15;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+89;62;0195104859001;NGQUITO S.A.S.;Servicios;AZUAY;Azuay;I5610.01;35;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+21;9;1793195459001;Neotropic Expeditions S.A.S;Servicios;PICHINCHA;Quito;N7912.00;12;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/neotropic-expeditions-sas/
+80;53;0190497100001;OLGER ARMIJOS DISTRIBUCIONES S.A.S.;Comercial;AZUAY;Azuay;G4711.02;32;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+115;88;0195094969001;PHS S.A.S.;Servicios;AZUAY;Azuay;M7110.22;5;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+98;71;0190497267001;PITYS S.A.S.;Servicios;AZUAY;Azuay;I5610.02;21;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+99;72;0195117111001;PROCESADORA DE ALIMENTOS EL JARDIN PROALJAR S.A.S.;Servicios;AZUAY;Azuay;I5610.01;16;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+14;6;1790004880001;PROQUIM S.A.;Manufacturero;PICHINCHA;Quito;C2023.11;40;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/proquim-sa/
+16;7;1792551137001;Perez Romo Leroux y Asociados PRL SA;Servicios;PICHINCHA;Pichincha;M7490.29;32;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/kin-analytics/
+52;25;0195142041001;RAGNAR-AGRO S.A.S.;Agroindustrial;AZUAY;Azuay;A0114.00;13;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+87;60;0190507033001;RAYMIPAMPA S.A.S.;Servicios;AZUAY;Azuay;I5610.01;4;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+48;21;0195135045001;REDROMAR S.A.S.;Agroindustrial;AZUAY;Azuay;A0321.02;4;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+94;67;0195134707001;RIOS-SAMANIEGO S.A.S.;Servicios;AZUAY;Azuay;I5610.01;27;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+79;52;0195117721001;RIVERASMARKET S.A.S.;Comercial;AZUAY;Azuay;G4711.01;19;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+96;69;0195128405001;SABORES DE TAIPA S.A.S.;Servicios;AZUAY;Azuay;I5610.01;24;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+49;22;0195110301001;SACHAYAYA S.A.S.;Agroindustrial;AZUAY;Azuay;A0240.01;18;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+119;92;0195095965001;SERVICIOS LEGALES LEGALCM S.A.S.;Servicios;AZUAY;Azuay;M6910.01;3;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+123;96;0195116121001;SHOCKBTL S.A.S.;Servicios;AZUAY;Azuay;M7310.04;7;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+95;68;0195145822001;SILVESTRAFOOD S.A.S.;Servicios;AZUAY;Azuay;I5610.01;4;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+121;94;0195124280001;SURIA S.A.S.;Servicios;AZUAY;Azuay;M7010.00;2;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+8;5;1790048772001;TECNISEGUROS S.A. AGENCIA ASESORA PRODUCTORA DE SEGUROS;Servicios;PICHINCHA;Quito;K6622.00;253;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/tecniseguros/
+65;38;0190004643001;TUBERIA GALVANIZADA ECUATORIANA S.A.S.;Manufacturero;AZUAY;Azuay;C2410.22;14;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+105;78;0195091463001;UNINDIT S.A.S.;Tecnológico;AZUAY;Azuay;J6110.04;4;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+101;74;0195104239001;V&V INTELIGENCIA TECNOLOGICA S.A.S.;Tecnológico;AZUAY;Azuay;J6311.03;4;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+71;44;0195095061001;VASACORP S.A.S.;Manufacturero;AZUAY;Azuay;C1410.02;16;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+70;43;0190502929001;VC-CONECTION SOCIEDAD POR ACCIONES SIMPLIFICADA;Manufacturero;AZUAY;Azuay;C1410.02;22;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html
+5;4;0993369273001;Wipala S.A.S;Manufacturero;GUAYAS;Guayaquil;C1061.21;5;2025;Directorio de Empresas B (B Lab) + ranking SCVS;https://www.bcorporation.net/en-us/find-a-b-corp/company/wipala-sas/
+50;23;0791841088001;ZUPONT S.A.S.;Agroindustrial;AZUAY;Azuay;A0122.01;4;2025;SCVS ranking empresarial 2025;https://appscvsmovil.supercias.gob.ec/ranking/reporte.html

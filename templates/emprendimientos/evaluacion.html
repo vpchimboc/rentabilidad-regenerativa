@@ -72,7 +72,8 @@
       <div class="kv"><span>IRR₀ sin suavizado</span><span>{{ r.irr0|floatformat:4 }}</span></div>
       <div class="kv"><span>Media aritmética ponderada</span><span>{{ r.media_aritmetica|floatformat:4 }}</span></div>
     {% else %}
-      <div class="alerta warning">{% icono "triangle-alert" %}<span>{{ r.motivo_irr }}.</span></div>
+      <p class="cifra-sm">IRR no calculable</p>
+      <div class="alerta warning">{% icono "triangle-alert" %}<span>{{ r.motivo_irr }}. «No calculable» no es un IRR bajo: indica que faltan mediciones o referencias L/U.</span></div>
     {% endif %}
     <p class="nota">El IRR ordena casos comparables; no sustituye a las salvaguardas ni prueba regeneración por sí solo.</p>
   </section>

@@ -36,7 +36,7 @@
 {% for r in resultados %}
   <section class="tarjeta">
     <p class="eyebrow">{% if r.tipo == 'OPT' %}Escenario optimista{% elif r.tipo == 'ESP' %}Escenario esperado{% else %}Escenario pesimista{% endif %} · factor {{ r.factor }}</p>
-    <p class="cifra {{ r.resultado.clase }}">{% if r.resultado.irr is None %}—{% else %}{{ r.resultado.irr|floatformat:4 }}{% endif %}</p>
+    <p class="cifra {{ r.resultado.clase }}">{% if r.resultado.irr is None %}<span class="cifra-sm">IRR no calculable</span>{% else %}{{ r.resultado.irr|floatformat:4 }}{% endif %}</p>
     <p><span class="pill {{ r.resultado.clase }}">({{ r.resultado.clasificacion }}) {{ r.resultado.veredicto }}</span></p>
     {% for d in r.resultado.dimensiones %}
       <div class="kv"><span>{{ d.dimension.codigo }} · {{ d.dimension.nombre }}</span><span>S {% if d.S is None %}—{% else %}{{ d.S|floatformat:3 }}{% endif %} · C {{ d.C|floatformat:2 }}</span></div>

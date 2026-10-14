@@ -77,7 +77,7 @@ R     = G1 × G2 × G3 × G4 × G5   (desconocida → indeterminado)</div>
           <td>{% if i.estado == "ACT" %}<span class="etq exito">Activo</span>{% elif i.estado == "EXCL" %}<span class="etq neutro">Excluido</span>{% else %}<span class="etq alerta">Candidato</span>{% endif %}</td>
           <td class="num">{{ i.ref_l|default_if_none:"—" }}</td>
           <td class="num">{{ i.ref_u|default_if_none:"—" }}</td>
-          <td class="nota">{% if i.puntuable %}{{ i.fuente_referencia|default:"Sin sustento registrado" }}{% if i.referencia_provisional %} <span class="etq alerta">provisional</span>{% endif %}{% else %}Sin referencias: no se puntúa{% endif %}</td>
+          <td class="nota">{% if i.puntuable %}{{ i.get_tipo_fuente_referencia_display|default:"Tipo sin indicar" }} · {{ i.fuente_referencia|default:"Sin sustento registrado" }}{% if i.periodo_referencia %} · {{ i.periodo_referencia }}{% endif %} <span class="etq {% if i.estado_referencia == "VAL" %}exito{% else %}alerta{% endif %}">{{ i.get_estado_referencia_display }}</span>{% else %}Sin referencias: no se puntúa{% endif %}</td>
         </tr>
         {% endfor %}
       {% endfor %}

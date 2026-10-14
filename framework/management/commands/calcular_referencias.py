@@ -52,9 +52,16 @@ class Command(BaseCommand):
             self.stdout.write(f"  {ind.codigo} {ind.nombre}: L={l:.4f} · U={u:.4f} · n={len(valores)}")
             cambios[ind.codigo] = {"L": [ind.ref_l, l], "U": [ind.ref_u, u], "n": len(valores)}
             if aplicar:
+                anios = sorted(set(Medicion.objects.filter(indicador=ind, estado=Medicion.OBS)
+                                   .values_list("periodo__anio", flat=True)))
                 ind.ref_l, ind.ref_u = l, u
-                ind.fuente_referencia, ind.referencia_provisional = fuente, True
-                ind.save(update_fields=["ref_l", "ref_u", "fuente_referencia", "referencia_provisional"])
+                ind.fuente_referencia = fuente
+                ind.tipo_fuente_referencia = "EMP"
+                ind.periodo_referencia = ", ".join(map(str, anios))
+                ind.evidencia_referencia = (f"Mediciones observadas en la plataforma (n={len(valores)}); "
+                                            "valores fijados, no se recalculan al cargar empresas")
+                ind.estado_referencia = "PROP"
+                ind.save()
 
         if not cambios:
             self.stdout.write("Ningún KPI alcanza el mínimo de observaciones sin referencias previas.")

@@ -186,6 +186,66 @@ class SalvaguardasYClasificacionTest(TestCase):
         self.assertIn("salvaguarda social incumplida", r["veredicto"])
 
 
+class MatrizReferenciasTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command("cargar_framework", verbosity=0)
+
+    def _csv(self, tmp, filas):
+        import csv
+
+        from framework.management.commands.matriz_referencias import COLUMNAS
+
+        ruta = tmp / "matriz.csv"
+        with ruta.open("w", encoding="utf-8-sig", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=COLUMNAS, delimiter=";")
+            w.writeheader()
+            for f in filas:
+                w.writerow({"estado_kpi": "CAND", "estado_referencia": "PROP", **f})
+        return ruta
+
+    def test_exporta_los_42_e_importa_con_ficha_completa(self):
+        import csv
+        import tempfile
+        from io import StringIO
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            salida = tmp / "export.csv"
+            call_command("matriz_referencias", "exportar", str(salida), stdout=StringIO())
+            with salida.open(encoding="utf-8-sig") as fh:
+                self.assertEqual(len(list(csv.DictReader(fh, delimiter=";"))), 42)
+
+            ruta = self._csv(tmp, [{"codigo": "A2", "L": "0", "U": "1", "tipo_fuente": "MAT",
+                                    "fuente": "Límites naturales de una proporción", "periodo": "2026",
+                                    "evidencia": "Definición del KPI", "estado_referencia": "JUST", "estado_kpi": "ACT"}])
+            call_command("matriz_referencias", "importar", str(ruta), stdout=StringIO())  # simulación
+            self.assertFalse(Indicador.objects.get(codigo="A2").puntuable)
+            call_command("matriz_referencias", "importar", str(ruta), aplicar=True, stdout=StringIO())
+        a2 = Indicador.objects.get(codigo="A2")
+        self.assertTrue(a2.puntuable)
+        self.assertEqual((a2.tipo_fuente_referencia, a2.estado_referencia, a2.estado), ("MAT", "JUST", "ACT"))
+        self.assertTrue(a2.referencia_provisional)  # solo «Validado» deja de ser provisional
+        self.assertEqual(Indicador.objects.count(), 42)
+
+    def test_rechaza_referencias_sin_fuente_o_invalidas(self):
+        import tempfile
+        from io import StringIO
+        from pathlib import Path
+
+        from django.core.management.base import CommandError
+
+        with tempfile.TemporaryDirectory() as tmp:
+            sin_fuente = self._csv(Path(tmp), [{"codigo": "A3", "L": "0.5", "U": "3"}])
+            with self.assertRaises(CommandError):
+                call_command("matriz_referencias", "importar", str(sin_fuente), aplicar=True, stdout=StringIO())
+            invertida = self._csv(Path(tmp), [{"codigo": "A3", "L": "3", "U": "0.5", "tipo_fuente": "SEC", "fuente": "x"}])
+            with self.assertRaises(CommandError):
+                call_command("matriz_referencias", "importar", str(invertida), aplicar=True, stdout=StringIO())
+        self.assertFalse(Indicador.objects.get(codigo="A3").puntuable)
+
+
 class MedicionTest(TestCase):
     @classmethod
     def setUpTestData(cls):

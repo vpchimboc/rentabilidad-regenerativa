@@ -44,7 +44,7 @@
           <td>{{ e.periodo }}</td>
           <td>{{ e.get_tipo_display }}</td>
           <td class="num">{{ e.factor }}</td>
-          <td class="num">{% if e.irr is None %}—{% else %}{{ e.irr|floatformat:4 }}{% endif %}</td>
+          <td class="num">{% if e.irr is None %}<span class="etq neutro" title="Faltan cobertura o referencias: no es un IRR bajo">No calculable</span>{% else %}{{ e.irr|floatformat:4 }}{% endif %}</td>
           <td>{{ e.veredicto }}</td>
           <td>{{ e.version|default:"v0" }}</td>
         </tr>

@@ -30,14 +30,15 @@ class VariableAdmin(admin.ModelAdmin):
 
 @admin.register(Indicador)
 class IndicadorAdmin(admin.ModelAdmin):
-    list_display = ("codigo", "nombre", "variable", "estado", "rol", "tipo", "peso", "ref_l", "ref_u", "referencia_provisional")
-    list_editable = ("estado", "ref_l", "ref_u")
+    list_display = ("codigo", "nombre", "variable", "estado", "tipo", "ref_l", "ref_u", "tipo_fuente_referencia", "estado_referencia")
+    list_editable = ("estado", "ref_l", "ref_u", "tipo_fuente_referencia", "estado_referencia")
     list_per_page = 50
-    list_filter = ("variable__dimension", "estado", "rol", "tipo", "referencia_provisional")
+    list_filter = ("variable__dimension", "estado", "rol", "tipo", "tipo_fuente_referencia", "estado_referencia")
     search_fields = ("codigo", "nombre")
     fieldsets = (
         ("Ficha", {"fields": ("variable", "codigo", "nombre", "formula", "componentes", "unidad", "rol", "estado", "version_ficha", "orden")}),
-        ("Normalización (§2.5)", {"fields": ("tipo", "peso", "ref_l", "ref_u", "ref_t", "ref_h", "fuente_referencia", "referencia_provisional")}),
+        ("Normalización (§2.5)", {"fields": ("tipo", "peso", "ref_l", "ref_u", "ref_t", "ref_h")}),
+        ("Ficha de la referencia", {"fields": ("tipo_fuente_referencia", "fuente_referencia", "periodo_referencia", "evidencia_referencia", "estado_referencia")}),
         ("Trazabilidad", {"fields": ("equivalencia_v0",)}),
     )
 

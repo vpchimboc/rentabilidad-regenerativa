@@ -246,7 +246,7 @@
         <tbody>
         {% for ev in evaluaciones %}
           <tr><td>{{ ev.periodo }}</td><td>{{ ev.veredicto }}</td>
-            <td class="num">{% if ev.irr is None %}—{% else %}{{ ev.irr|floatformat:3 }}{% endif %}</td><td>{{ ev.version|default:"v0" }}</td></tr>
+            <td class="num">{% if ev.irr is None %}<span class="etq neutro" title="Faltan cobertura o referencias: no es un IRR bajo">No calculable</span>{% else %}{{ ev.irr|floatformat:3 }}{% endif %}</td><td>{{ ev.version|default:"v0" }}</td></tr>
         {% endfor %}
         </tbody>
       </table>

@@ -64,7 +64,7 @@
           <td>{{ ev.creado|date:"d/m/Y H:i" }}</td>
           <td>{{ ev.version|default:"v0" }}</td>
           <td>{{ ev.veredicto }}</td>
-          <td class="num">{% if ev.irr is None %}—{% else %}{{ ev.irr|floatformat:4 }}{% endif %}</td>
+          <td class="num">{% if ev.irr is None %}<span class="etq neutro" title="Faltan cobertura o referencias: no es un IRR bajo">No calculable</span>{% else %}{{ ev.irr|floatformat:4 }}{% endif %}</td>
           <td>{{ ev.elegibilidad|default:"—" }}</td>
           <td>{{ ev.cuello_de_botella|default:"—" }}</td>
         </tr>

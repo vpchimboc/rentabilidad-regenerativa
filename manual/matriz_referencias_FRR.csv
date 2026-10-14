@@ -1,0 +1,43 @@
+﻿codigo;dimension;indicador;formula;unidad;sentido;estado_kpi;L;U;T;H;tipo_fuente;fuente;periodo;evidencia;estado_referencia;correspondencia_v0
+E1;D1;Margen de seguridad;(V − PE)/V;proporción (0–1);BEN;CAND;-0,057985;0,65902;;;EMP;"Percentiles P10–P90 de la muestra observada (n=92); provisional";2025;"Mediciones observadas en la plataforma (n=92); valores fijados, no se recalculan al cargar empresas";PROP;ECO_PE (Ventas sobre el punto de equilibrio): Transformación: E1 = 1 − PE/V
+E2;D1;Margen neto;UN/V;proporción (0–1);BEN;CAND;-0,048826;0,187207;;;EMP;"Percentiles P10–P90 de la muestra observada (n=92); provisional";2025;"Mediciones observadas en la plataforma (n=92); valores fijados, no se recalculan al cargar empresas";PROP;ECO_MARGEN (Margen neto ajustado por externalidades): Parcial: E2 no descuenta externalidades
+E4;D1;Razón corriente;AC/PC;veces;BEN;CAND;0,73;4,34;;;EMP;"Percentiles P10–P90 de la muestra observada (n=91); provisional";2025;"Mediciones observadas en la plataforma (n=91); valores fijados, no se recalculan al cargar empresas";PROP;
+E7;D1;Tasa de reinversión;RI/B;proporción (0–1);BEN;CAND;;;;;;;;;PROP;ECO_REINV (Utilidad reinvertida en capitales no financieros): Parcial: E7 exige base B definida
+E3;D1;ROA;UN/A_prom;proporción (0–1);BEN;CAND;-0,065791;0,360554;;;EMP;"Percentiles P10–P90 de la muestra observada (n=87); provisional";2025;"Mediciones observadas en la plataforma (n=87); valores fijados, no se recalculan al cargar empresas";PROP;ECO_ROI (Retorno sobre la inversión (ROI)): Equivalente: se calculaba como ROA
+E5;D1;Crecimiento de ingresos;(V_t − V_t−1)/V_t−1;proporción (0–1);BEN;CAND;-0,172879;2,560195;;;EMP;"Percentiles P10–P90 de la muestra observada (n=82); provisional";2025;"Mediciones observadas en la plataforma (n=82); valores fijados, no se recalculan al cargar empresas";PROP;
+E6;D1;Margen de flujo operativo;FCO/V;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+A1;D2;Intensidad material;M/Q;kg/unidad;COS;CAND;;;;;;;;;PROP;
+A10;D2;Resultado ecológico neto;Y_t − Y_0;unidad del indicador;BEN;CAND;;;;;;;;;PROP;
+A2;D2;Contenido recuperado;MR/MT;proporción (0–1);BEN;CAND;;;;;;;;;PROP;AMB_CIRC (Tasa de circularidad efectiva): Equivalente
+A3;D2;Intensidad energética;EN/Q;kWh/unidad;COS;CAND;;;;;;;;;PROP;OPE_ENER (Consumo energético por unidad producida): Equivalente: pasa de D2 operativa a D2 ambiental
+A4;D2;Energía renovable;ER/ET;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+A5;D2;Intensidad hídrica;AG/Q;m³/unidad;COS;CAND;;;;;;;;;PROP;AMB_AGUA (Eficiencia en el uso del agua (L/unidad)): Equivalente: cambia la unidad a m³/unidad
+A8;D2;Valorización de residuos;RV/RS;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+A6;D2;Intensidad GEI;CO2e/Q;kg CO₂e/unidad;COS;CAND;;;;;;;;;PROP;AMB_CARB (Balance neto de carbono (tCO₂e)): Parcial: A6 es intensidad por unidad funcional
+A9;D2;Compras ambientales;CA/CT;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+A7;D2;Intensidad de residuos;RS/Q;kg/unidad;COS;CAND;;;;;;;;;PROP;AMB_RESID (Residuos no valorizados por unidad): Parcial: A7 mide residuos totales por unidad
+S1;D3;Empleo formal/estable;EF/ET;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+S8;D3;Debida diligencia social;PR/PT;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+S2;D3;Rotación voluntaria;BV/EP;proporción (0–1);COS;CAND;;;;;;;;;PROP;
+S9;D3;Resolución de quejas;QR/QT;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+S10;D3;Participación de stakeholders;PI/PE;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+S3;D3;Brecha salarial ajustada;(SR − SC)/SR;proporción (0–1);COS;CAND;;;;;;;;;PROP;
+S11;D3;Resultado comunitario;ΔYC = YC_t − YC_0;unidad del indicador;BEN;CAND;;;;;;;;;PROP;SOC_INGRESO (Incremento del ingreso de proveedores y trabajadores): Parcial: S11 exige línea base comunitaria
+S4;D3;Incidencia de accidentes;AT×K/HT;accidentes/K h;COS;CAND;;;;;;;;;PROP;
+S12;D3;Compras locales;CL/CT;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+S5;D3;Bienestar laboral;Σpuntajes/(N×Pmax);proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+S13;D3;Cobertura de proveedores críticos;PCV/PCT;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+S6;D3;Representación inclusiva;GI/ET;proporción (0–1);OBJ;CAND;;;;;;;;;PROP;
+S7;D3;Cobertura de formación;PF/PE;proporción (0–1);BEN;CAND;;;;;;;;;PROP;SOC_CAPAC (Horas de capacitación por trabajador): Parcial: S7 mide cobertura, no horas
+O1;D4;Productividad del recurso crítico;Q/R;unidades/recurso;BEN;CAND;;;;;;;;;PROP;
+O6;D4;Tiempo de recuperación;ΣTR/NE;horas;COS;CAND;;;;;;;;;PROP;
+O9;D4;Innovación implementada;II/IP;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+O10;D4;Acciones de mejora cerradas;AM/AT;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+O2;D4;Eficiencia de tiempo;TV/TT;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+O7;D4;Continuidad probada;PP/PT;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+O11;D4;Participación en mejora;PM/PE;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+O3;D4;OEE;D×P×C;proporción (0–1);BEN;CAND;;;;;;;;;PROP;OPE_EFIC (Eficiencia operativa global (OEE)): Equivalente
+O8;D4;Respuesta al cambio;ΣTC/NC;horas;COS;CAND;;;;;;;;;PROP;
+O12;D4;Procesos controlados;PC/PT;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+O4;D4;First Pass Yield;UC1/UT;proporción (0–1);BEN;CAND;;;;;;;;;PROP;
+O5;D4;Fallas/reclamaciones;NF/UT;proporción (0–1);COS;CAND;;;;;;;;;PROP;

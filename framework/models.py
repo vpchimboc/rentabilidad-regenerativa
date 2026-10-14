@@ -89,11 +89,30 @@ class Indicador(models.Model):
     ref_u = models.FloatField("U (referencia superior)", null=True, blank=True)
     ref_t = models.FloatField("T (objetivo)", null=True, blank=True)
     ref_h = models.FloatField("H (tolerancia)", null=True, blank=True)
+    FUENTES_REF = [
+        ("MAT", "Matemática (límites naturales de la variable)"),
+        ("NOR", "Normativa (valor exigido por una norma)"),
+        ("SEC", "Sectorial (benchmark externo documentado)"),
+        ("EMP", "Empírica (distribución observada con metodología explícita)"),
+    ]
+    ESTADOS_REF = [
+        ("PROP", "Propuesto"),
+        ("JUST", "Justificado"),
+        ("REV", "Revisado"),
+        ("VAL", "Validado"),
+    ]
     fuente_referencia = models.CharField(
         "Sustento de las referencias", max_length=240, blank=True,
-        help_text="Sin sustento documentado el indicador no se puntúa (§2.5).",
+        help_text="Procedencia bibliográfica, normativa o empírica. Sin sustento el indicador no se puntúa (§2.5).",
     )
-    referencia_provisional = models.BooleanField(default=True)
+    tipo_fuente_referencia = models.CharField("Tipo de fuente de L/U", max_length=3, choices=FUENTES_REF, blank=True)
+    periodo_referencia = models.CharField("Periodo de referencia", max_length=40, blank=True)
+    evidencia_referencia = models.CharField("Evidencia", max_length=300, blank=True,
+                                            help_text="Documento o registro que respalda las referencias")
+    estado_referencia = models.CharField("Estado de la referencia", max_length=4, choices=ESTADOS_REF,
+                                         default="PROP")
+    referencia_provisional = models.BooleanField(default=True,
+                                                 help_text="Verdadero mientras la referencia no esté validada")
     equivalencia_v0 = models.CharField(
         "Correspondencia con la plataforma preliminar", max_length=240, blank=True,
         help_text="Matriz de correspondencia 17 → 42 (DIREC 1, prioridad 1)",
@@ -108,6 +127,10 @@ class Indicador(models.Model):
 
     def __str__(self):
         return f"{self.codigo} · {self.nombre}"
+
+    def save(self, *args, **kwargs):
+        self.referencia_provisional = self.estado_referencia != "VAL"
+        super().save(*args, **kwargs)
 
     @property
     def dimension(self):

@@ -11,6 +11,12 @@
     <p class="lede">Arquitectura candidata de la Fase 2: cuatro dimensiones, {{ total_kpi }} KPI candidatos,
       salvaguardas no compensatorias y un índice descriptivo. Todo está sujeto a validación de contenido.</p>
   </div>
+  {% if user.is_staff %}
+  <div class="acciones">
+    <a class="boton sec" href="/admin/framework/parametrosfrr/">{% icono "settings" "ico-sm" %}Parámetros (ε, cobertura)</a>
+    <a class="boton" href="/admin/framework/indicador/">{% icono "pencil" "ico-sm" %}Editar KPI y referencias</a>
+  </div>
+  {% endif %}
 </div>
 
 <div class="split">

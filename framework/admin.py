@@ -31,6 +31,8 @@ class VariableAdmin(admin.ModelAdmin):
 @admin.register(Indicador)
 class IndicadorAdmin(admin.ModelAdmin):
     list_display = ("codigo", "nombre", "variable", "estado", "rol", "tipo", "peso", "ref_l", "ref_u", "referencia_provisional")
+    list_editable = ("estado", "ref_l", "ref_u")
+    list_per_page = 50
     list_filter = ("variable__dimension", "estado", "rol", "tipo", "referencia_provisional")
     search_fields = ("codigo", "nombre")
     fieldsets = (

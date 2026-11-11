@@ -1,16 +1,24 @@
 from django.contrib import messages
 from django.shortcuts import redirect, render
 
+from rna import graficos
 from rna.models import ModeloRNA
-from rna.services import RNANoEntrenable, diagnostico, entrenar, indicadores_entrada, modelo_activo, predecir
+from rna.services import RNANoEntrenable, diagnostico, entrenar, entrenar_hibrido, indicadores_entrada, modelo_activo, predecir
 
 
 def panel(request):
-    return render(
-        request,
-        "rna/panel.html",
-        {"modelo": modelo_activo(), "modelos": ModeloRNA.objects.all()[:10], "diag": diagnostico()},
-    )
+    modelo, diag = modelo_activo(), diagnostico()
+    figuras = {"entradas": graficos.entradas_por_dimension(diag["por_dimension"])}
+    if modelo:
+        m = modelo.metricas
+        figuras.update(
+            arquitectura=graficos.arquitectura(modelo.n_entradas, modelo.n_ocultas),
+            curva=graficos.curva_aprendizaje(modelo.historial),
+            dispersion=graficos.dispersion(m.get("prueba"), m.get("r2_empresas_no_vistas"), m.get("mae_empresas_no_vistas")),
+            residuos=graficos.residuos(m.get("prueba")),
+        )
+    return render(request, "rna/panel.html",
+                  {"modelo": modelo, "modelos": ModeloRNA.objects.all()[:10], "diag": diag, "fig": figuras})
 
 
 def entrenar_modelo(request):
@@ -25,16 +33,21 @@ def entrenar_modelo(request):
         messages.error(request, "Parámetros de entrenamiento inválidos.")
         return redirect("rna_panel")
     try:
-        modelo = entrenar(n_muestras=n_muestras, n_ocultas=n_ocultas, epocas=epocas, lr=lr)
+        # Por defecto: KPI económicos reales de las empresas + D2–D4 simulados (separación por empresa).
+        try:
+            modelo = entrenar_hibrido(n_ocultas=n_ocultas, epocas=epocas, lr=lr)
+            m = modelo.metricas
+            texto = (f"Modelo híbrido entrenado: {modelo.n_muestras} muestras de {m['empresas_entrenamiento']} empresas. "
+                     f"En {m['empresas_prueba']} empresas no vistas: R² = {m['r2_empresas_no_vistas']} · "
+                     f"MAE = {m['mae_empresas_no_vistas']}.")
+        except RNANoEntrenable:
+            modelo = entrenar(n_muestras=n_muestras, n_ocultas=n_ocultas, epocas=epocas, lr=lr)
+            texto = (f"Modelo entrenado con {n_muestras} escenarios simulados. "
+                     f"R² = {modelo.metricas.get('r2')} · RMSE = {modelo.metricas.get('rmse')}.")
     except RNANoEntrenable as error:
         messages.error(request, f"No es posible entrenar todavía. {error}")
         return redirect("rna_panel")
-    messages.success(
-        request,
-        f"Modelo exploratorio entrenado con {n_muestras} escenarios simulados. "
-        f"R² = {modelo.metricas.get('r2')} · RMSE = {modelo.metricas.get('rmse')}. "
-        "No constituye validación empírica.",
-    )
+    messages.success(request, texto + " Exploratorio: D2–D4 simulados, no constituye validación empírica.")
     return redirect("rna_panel")
 
 

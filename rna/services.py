@@ -49,15 +49,25 @@ def _rango(ind):
     return ind.ref_l - 0.35 * ancho, ind.ref_u + 0.35 * ancho
 
 
+def _presencia(dimensiones, solo=None):
+    """KPI sin L/U: no puntúan, pero en la simulación se dan por registrados para la cobertura."""
+    return {
+        i.codigo: 1.0 for dim in dimensiones if solo is None or dim.codigo in solo
+        for var in dim.variables.all() for i in var.indicadores.all()
+        if i.estado != Indicador.EXCLUIDO and not i.puntuable
+    }
+
+
 def generar_dataset(n_muestras=600, semilla=7):
     """Escenarios simulados: KPI sorteados alrededor de sus referencias; etiqueta = IRR del FRR."""
     rng = random.Random(semilla)
     dimensiones = cargar_dimensiones()
     entradas = indicadores_entrada()
+    presencia = _presencia(dimensiones)
     X, y = [], []
     for _ in range(n_muestras):
         mediciones = {ind.codigo: rng.uniform(*_rango(ind)) for ind in entradas}
-        irr = evaluar(mediciones, dimensiones)["irr"]
+        irr = evaluar({**mediciones, **presencia}, dimensiones)["irr"]
         if irr is None:
             raise RNANoEntrenable(
                 "Los KPI con referencias no alcanzan la cobertura mínima en todas las dimensiones: "
@@ -138,11 +148,7 @@ def generar_dataset_hibrido(repeticiones=10, semilla=7):
     entradas = indicadores_entrada()
     entradas_d1 = [i for i in entradas if i.variable.dimension.codigo not in DIMENSIONES_SIMULADAS]
     entradas_sim = [i for i in entradas if i.variable.dimension.codigo in DIMENSIONES_SIMULADAS]
-    presencia = [
-        i.codigo for dim in dimensiones if dim.codigo in DIMENSIONES_SIMULADAS
-        for var in dim.variables.all() for i in var.indicadores.all()
-        if i.estado != Indicador.EXCLUIDO and not i.puntuable
-    ]
+    presencia = _presencia(dimensiones, DIMENSIONES_SIMULADAS)
     if not entradas_sim:
         raise RNANoEntrenable("D2–D4 no tienen KPI con referencias L/U para simular.")
     X, y, grupos, omitidas = [], [], [], 0
@@ -153,7 +159,7 @@ def generar_dataset_hibrido(repeticiones=10, semilla=7):
             continue
         for _ in range(repeticiones):
             sim = {i.codigo: rng.uniform(*_rango(i)) for i in entradas_sim}
-            irr = evaluar({**d1, **sim, **{c: 1.0 for c in presencia}}, dimensiones)["irr"]
+            irr = evaluar({**d1, **sim, **presencia}, dimensiones)["irr"]
             if irr is None:
                 raise RNANoEntrenable("El IRR no es calculable ni con D2–D4 simulados: revise la cobertura de D1.")
             X.append([{**d1, **sim}[i.codigo] for i in entradas])
@@ -187,6 +193,7 @@ def entrenar_hibrido(repeticiones=10, n_ocultas=8, epocas=300, lr=0.05, semilla=
         "empresas_omitidas_d1_incompleto": omitidas,
         "r2_empresas_no_vistas": round(1 - ss_res / ss_tot, 4),
         "mae_empresas_no_vistas": round(sum(abs(p - t) for p, t in zip(pred, reales)) / len(reales), 4),
+        "prueba": [[round(p, 4), round(t, 4)] for p, t in zip(pred, reales)],  # para las gráficas
     }
     ModeloRNA.objects.update(activo=False)
     return ModeloRNA.objects.create(

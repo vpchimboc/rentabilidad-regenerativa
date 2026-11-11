@@ -8,9 +8,11 @@
   <p class="eyebrow">Objetivo específico 3</p>
   <h1>Red Neuronal Artificial (MLP)</h1>
   <p class="lede">Perceptrón multicapa entrenado por retropropagación. Las entradas son los KPI con referencias
-  de normalización justificadas y la salida es el IRR del FRR. Es un modelo <b>exploratorio</b>: entrenado con
-  escenarios simulados mide la capacidad de reproducir el framework y <b>no constituye validación empírica</b>.
-  Con datos reales depurados (D1–D4 suficientes) se evaluará su viabilidad frente a modelos más sencillos.</p>
+  de normalización justificadas y la salida es el IRR del FRR. Se entrena con un <b>esquema híbrido</b>: los KPI
+  económicos (D1) son los datos reales de cada empresa y D2–D4 se simulan dentro de sus referencias; la prueba se
+  hace con empresas que la red no vio. Es un modelo <b>exploratorio</b>: mide la capacidad de reproducir el framework
+  y <b>no constituye validación empírica</b>. Con datos reales depurados de D1–D4 se evaluará su viabilidad frente a
+  modelos más sencillos.</p>
 </section>
 
 {% if diag.dimensiones_sin_referencias %}
@@ -57,8 +59,36 @@
 </div>
 
 {% if modelo %}
+{% if modelo.metricas.r2_empresas_no_vistas is not None %}
 <section class="tarjeta">
-  <h2>Curva de entrenamiento</h2>
+  <h2>Validación en empresas no vistas</h2>
+  <div class="kv"><span>Origen de los datos</span><span>{{ modelo.metricas.origen }}</span></div>
+  <div class="kv"><span>Empresas de entrenamiento / prueba</span><span>{{ modelo.metricas.empresas_entrenamiento }} / {{ modelo.metricas.empresas_prueba }}</span></div>
+  <div class="kv"><span>Empresas omitidas (D1 incompleto)</span><span>{{ modelo.metricas.empresas_omitidas_d1_incompleto }}</span></div>
+  <div class="kv"><span>R² en empresas no vistas</span><span>{{ modelo.metricas.r2_empresas_no_vistas }}</span></div>
+  <div class="kv"><span>MAE en empresas no vistas</span><span>{{ modelo.metricas.mae_empresas_no_vistas }}</span></div>
+</section>
+{% endif %}
+
+<div class="split">
+  <section class="tarjeta"><h2>Arquitectura de la red</h2>{{ fig.arquitectura }}</section>
+  <section class="tarjeta"><h2>Entradas por dimensión</h2>{{ fig.entradas }}</section>
+</div>
+<div class="split">
+  <section class="tarjeta"><h2>Curva de aprendizaje</h2>{{ fig.curva }}
+    <p class="nota">Error cuadrático medio de entrenamiento por época: debe bajar y estabilizarse.</p></section>
+  {% if fig.dispersion %}
+  <section class="tarjeta"><h2>Predicho frente a analítico</h2>{{ fig.dispersion }}
+    <p class="nota">Cada punto es un escenario de una empresa de prueba; cuanto más cerca de la diagonal, mejor.</p></section>
+  {% endif %}
+</div>
+{% if fig.residuos %}
+<section class="tarjeta"><h2>Distribución de los errores</h2>{{ fig.residuos }}
+  <p class="nota">Errores centrados en cero indican que la red no sobreestima ni subestima de forma sistemática.</p></section>
+{% endif %}
+
+<section class="tarjeta">
+  <h2>Curva de entrenamiento (tabla)</h2>
   <div class="tscroll">
     <table>
       <thead><tr><th class="num">Época</th><th class="num">MSE</th><th>Convergencia</th></tr></thead>

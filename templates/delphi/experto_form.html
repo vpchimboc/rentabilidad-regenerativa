@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titulo %}{% if experto %}Editar experto{% else %}Nuevo experto{% endif %}{% endblock %}
+{% load iconos %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'delphi_panel' %}">Validación Delphi</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">{% if experto %}Editar experto{% else %}Nuevo experto{% endif %}</span>{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">Panel de expertos</p>
+  <h1>{% if experto %}{{ experto.nombre }}{% else %}Registrar experto{% endif %}</h1>
+  <p class="lede">Criterios del protocolo: maestría o doctorado, al menos 5 años de experiencia y publicaciones científicas.</p>
+</section>
+<section class="tarjeta">
+  <form method="post">{% csrf_token %}
+    {% for campo in form %}
+      <div style="margin-bottom:12px">
+        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        {% if campo.errors %}<p class="nota" style="color:#b42318">{{ campo.errors|join:" " }}</p>{% endif %}
+      </div>
+    {% endfor %}
+    <button class="boton" type="submit">{% icono "check" "ico-sm" %}Guardar</button>
+    <a class="boton sec" href="{% url 'delphi_panel' %}">Cancelar</a>
+  </form>
+</section>
+{% endblock %}

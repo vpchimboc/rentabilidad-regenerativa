@@ -7,9 +7,9 @@
 <section>
   <p class="eyebrow">Objetivo específico 5</p>
   <h1>Validación por método Delphi modificado</h1>
-  <p class="lede">Consulta estructurada a expertos en rondas sucesivas. El consenso se
-  determina con el Índice de Validez de Contenido (IVC ≥ {{ umbral_ivc }}) y el Coeficiente
-  de Concordancia W de Kendall (W ≥ {{ umbral_w }}).</p>
+  <p class="lede">Consulta estructurada e independiente a expertos, inspirada en el Delphi modificado y en criterios
+  de validez de contenido. Cada experto valora P1–P12 (escala 1–5) y responde P13–P14. El reporte de cada ronda
+  presenta puntuaciones, mediana, rango, proporción de respuestas 4–5 e I-CVI exploratorio por dimensión.</p>
 </section>
 
 <div class="split">
@@ -29,6 +29,7 @@
             <td>
               <a class="boton sec" href="{% url 'delphi_cuestionario' r.pk %}">Cuestionario</a>
               <a class="boton sec" href="{% url 'delphi_resultado' r.pk %}">Resultados</a>
+              <a class="boton" href="{% url 'delphi_reporte' r.pk %}">Reporte</a>
             </td>
           </tr>
         {% empty %}
@@ -41,11 +42,12 @@
   </section>
 
   <section class="tarjeta">
-    <h2>Panel de expertos</h2>
+    <div class="tarjeta-cab"><h2>Panel de expertos</h2>
+      {% if perms.delphi.add_experto %}<a class="boton" href="{% url 'delphi_experto_nuevo' %}">Agregar experto</a>{% endif %}</div>
     <div class="tscroll">
       <table>
         <thead><tr><th>Experto</th><th>Grado</th><th>Institución</th>
-          <th class="num">Años</th><th class="num">Public.</th><th>Criterios</th></tr></thead>
+          <th class="num">Años</th><th class="num">Public.</th><th>Criterios</th><th></th></tr></thead>
         <tbody>
         {% for e in expertos %}
           <tr>
@@ -55,10 +57,14 @@
             <td class="num">{{ e.anios_experiencia }}</td>
             <td class="num">{{ e.publicaciones }}</td>
             <td>{% if e.cumple_criterios %}<span class="pill l4">cumple</span>
-                {% else %}<span class="pill l1">revisar</span>{% endif %}</td>
+                {% else %}<span class="pill l1">revisar</span>{% endif %}{% if not e.activo %} <span class="etq neutro">inactivo</span>{% endif %}</td>
+            <td style="white-space:nowrap">
+              {% if perms.delphi.change_experto %}<a class="boton sec" href="{% url 'delphi_experto_editar' e.pk %}">Editar</a>{% endif %}
+              {% if perms.delphi.delete_experto %}<a class="boton sec" href="{% url 'delphi_experto_eliminar' e.pk %}">Eliminar</a>{% endif %}
+            </td>
           </tr>
         {% empty %}
-          <tr><td colspan="6" class="nota">Sin expertos registrados.</td></tr>
+          <tr><td colspan="7" class="nota">Sin expertos registrados.</td></tr>
         {% endfor %}
         </tbody>
       </table>

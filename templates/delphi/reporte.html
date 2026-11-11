@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block titulo %}Reporte de evaluación experta{% endblock %}
+{% load iconos %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'delphi_panel' %}">Validación Delphi</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Reporte ronda {{ ronda.numero }}</span>{% endblock %}
+
+{% block contenido %}
+<style>@media print { header, nav, aside, .no-imprimir { display:none !important } .tarjeta { break-inside: avoid; box-shadow:none } }</style>
+<div class="cabecera-pagina">
+  <div>
+    <p class="eyebrow">Evaluación experta del FRR · ronda {{ ronda.numero }} · {{ ronda.fecha|date:"d/m/Y" }}</p>
+    <h1>Reporte de evaluación experta</h1>
+    <p class="nota">Cuestionario breve, una única ronda · {{ expertos|length }} experto{{ expertos|length|pluralize }} con respuestas.</p>
+  </div>
+  <div class="acciones no-imprimir">
+    <a class="boton sec" href="?formato=csv">Descargar CSV (Excel)</a>
+    <button class="boton" type="button" onclick="window.print()">Imprimir / PDF</button>
+  </div>
+</div>
+
+<section class="tarjeta">
+  <h2>Panel de expertos</h2>
+  <div class="tscroll"><table>
+    <thead><tr><th>Código</th><th>Experto</th><th>Grado</th><th>Institución y cargo</th><th>Especialidad</th></tr></thead>
+    <tbody>{% for e in expertos %}
+      <tr><td><code>EXP{{ forloop.counter }}</code></td><td>{{ e.nombre }}</td><td>{{ e.get_grado_display }}</td>
+        <td class="nota">{{ e.institucion }}</td><td class="nota">{{ e.area }}</td></tr>
+    {% empty %}<tr><td colspan="5" class="nota">Todavía no hay respuestas registradas en esta ronda.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+<section class="tarjeta">
+  <h2>Resultados por pregunta (P1–P12)</h2>
+  <div class="tscroll"><table>
+    <thead><tr><th>Pregunta</th><th>Afirmación</th>
+      {% for e in expertos %}<th class="num">EXP{{ forloop.counter }}</th>{% endfor %}
+      <th class="num">Mediana</th><th class="num">Rango</th><th class="num">% 4–5</th><th class="num">I-CVI</th></tr></thead>
+    <tbody>{% for f in filas %}
+      <tr>
+        <td><code>{{ f.item.codigo }}</code><br><span class="nota">{{ f.item.get_criterio_display }}</span></td>
+        <td>{{ f.item.enunciado }}
+          {% for nombre, c in f.comentarios %}<br><span class="nota">«{{ c }}» — {{ nombre }}</span>{% endfor %}</td>
+        {% for v in f.valores %}<td class="num">{{ v|default_if_none:"—" }}</td>{% endfor %}
+        <td class="num">{{ f.mediana|default_if_none:"—" }}</td>
+        <td class="num">{% if f.n %}{{ f.minimo }}–{{ f.maximo }}{% else %}—{% endif %}</td>
+        <td class="num">{% if f.pct_favorable is None %}—{% else %}{{ f.pct_favorable }} %{% endif %}</td>
+        <td class="num">{{ f.icvi|default_if_none:"" }}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  <p class="nota">Escala: 1 muy deficiente · 2 deficiente · 3 aceptable · 4 bueno · 5 excelente. «—» indica sin respuesta o
+    «No evaluable». El I-CVI exploratorio (expertos con 4 o 5 / total) se informa solo en P4–P7 y corresponde a una
+    valoración global por dimensión, no a la validación individual de los 42 KPI.</p>
+</section>
+
+<div class="split">
+  <section class="tarjeta">
+    <h2>P14. ¿Mantener el FRR para evaluación exploratoria?</h2>
+    {% for etq, n in p14.items %}<div class="kv"><span>{{ etq }}</span><span>{{ n }}</span></div>{% endfor %}
+  </section>
+  <section class="tarjeta">
+    <h2>Lectura de los porcentajes</h2>
+    <p class="nota">Con un panel pequeño el porcentaje favorable solo toma pocos valores (con 3 expertos: 0 %, 33,3 %,
+      66,7 % o 100 %). Un acuerdo de al menos 75 % equivale a que todos los expertos califiquen 4 o 5. Al ser una sola
+      ronda, los resultados no se presentan como consenso Delphi iterativo.</p>
+  </section>
+</div>
+
+<section class="tarjeta">
+  <h2>P13. Cambios prioritarios propuestos</h2>
+  {% for d in dictamenes %}
+    <div class="kv"><span><b>{{ d.experto.nombre }}</b></span><span>{{ d.get_recomendacion_display }}</span></div>
+    <p>{{ d.cambio_prioritario|default:"Sin respuesta."|linebreaksbr }}</p>
+  {% empty %}<p class="nota">Sin respuestas abiertas registradas.</p>{% endfor %}
+</section>
+{% endblock %}

@@ -39,7 +39,7 @@
           <td>{{ m.indicador.variable.dimension.codigo }}</td>
           <td><code>{{ m.indicador.codigo }}</code></td>
           <td>{{ m.indicador.nombre }}</td>
-          <td>{% if m.estado == "OBS" %}<span class="etq exito">OBS</span>{% else %}<span class="etq neutro" title="{{ m.observaciones }}">{{ m.estado }}</span>{% endif %}</td>
+          <td>{% if m.simulado %}<span class="etq alerta" title="Valor simulado: no es un dato verificado de la empresa">SIMULADO</span>{% elif m.estado == "OBS" %}<span class="etq exito">OBS</span>{% else %}<span class="etq neutro" title="{{ m.observaciones }}">{{ m.estado }}</span>{% endif %}</td>
           <td class="num">{% if m.valor is None %}—{% else %}{{ m.valor|floatformat:4 }}{% endif %}</td>
           <td class="nota">{{ m.unidad|default:m.indicador.unidad }}</td>
           <td class="num">{% if m.z is None %}—{% else %}{{ m.z|floatformat:3 }}{% endif %}</td>

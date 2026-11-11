@@ -315,3 +315,25 @@ class MatrizMedicionesTest(TestCase):
         for fila in [";0999999999001;2025;S1;OBS;0,5;;;Fuente;", f"{self.periodo.pk};;;S1;OBS;0,5;;;;"]:
             with self.assertRaises(CommandError):
                 call_command("matriz_mediciones", "importar", str(self._csv([fila])), stdout=StringIO())
+
+
+class SimularFaltantesTest(TestCase):
+    """Los faltantes simulados quedan marcados, no pisan datos reales y se pueden eliminar."""
+
+    def test_simula_marca_y_elimina(self):
+        from emprendimientos.models import Medicion
+        from framework.models import Indicador
+        call_command("cargar_framework", stdout=StringIO())
+        p = Periodo.objects.create(emprendimiento=Emprendimiento.objects.create(nombre="X"), anio=2025)
+        real = Medicion.objects.create(periodo=p, indicador=Indicador.objects.get(codigo="A1"),
+                                       estado="ND", observaciones="No publica")
+        call_command("simular_faltantes", stdout=StringIO())
+        self.assertEqual(Medicion.objects.count(), 1)  # simulación: no guarda
+        call_command("simular_faltantes", aplicar=True, stdout=StringIO())
+        sim = Medicion.objects.filter(simulado=True)
+        self.assertEqual(sim.count(), Indicador.objects.filter(variable__dimension__codigo__in=["D2", "D3", "D4"]).count() - 1)
+        self.assertTrue(all(m.fuente == "SIMULADO" for m in sim))
+        real.refresh_from_db()
+        self.assertEqual((real.estado, real.simulado), ("ND", False))
+        call_command("simular_faltantes", eliminar=True, stdout=StringIO())
+        self.assertEqual(list(Medicion.objects.all()), [real])

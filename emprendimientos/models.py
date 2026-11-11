@@ -103,6 +103,10 @@ class Periodo(models.Model):
             if m.estado == Medicion.OBS and m.valor is not None
         }
 
+    def simulados(self):
+        """Códigos de KPI cuyo valor es simulado en este período."""
+        return set(self.mediciones.filter(simulado=True).values_list("indicador__codigo", flat=True))
+
     def no_aplicables(self):
         """Códigos declarados NA (se excluyen del denominador de cobertura)."""
         return set(self.mediciones.filter(estado=Medicion.NA).values_list("indicador__codigo", flat=True))
@@ -140,6 +144,8 @@ class Medicion(models.Model):
     observaciones = models.CharField(max_length=300, blank=True,
                                      help_text="Justificación de NA/ND/NV o notas de auditoría")
     version_ficha = models.CharField(max_length=10, default="1.0")
+    simulado = models.BooleanField(
+        default=False, help_text="Valor generado por simulación (no es un dato verificado de la empresa)")
 
     class Meta:
         unique_together = [("periodo", "indicador")]

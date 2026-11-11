@@ -37,7 +37,7 @@ class Command(BaseCommand):
     def handle(self, *args, minimo, aplicar, sobrescribir, **opts):
         cambios = {}
         for ind in Indicador.objects.exclude(tipo=Indicador.OBJETIVO).order_by("codigo"):
-            valores = list(Medicion.objects.filter(indicador=ind, estado=Medicion.OBS, valor__isnull=False)
+            valores = list(Medicion.objects.filter(indicador=ind, estado=Medicion.OBS, valor__isnull=False, simulado=False)
                            .values_list("valor", flat=True))
             if len(valores) < minimo:
                 continue
@@ -52,7 +52,7 @@ class Command(BaseCommand):
             self.stdout.write(f"  {ind.codigo} {ind.nombre}: L={l:.4f} · U={u:.4f} · n={len(valores)}")
             cambios[ind.codigo] = {"L": [ind.ref_l, l], "U": [ind.ref_u, u], "n": len(valores)}
             if aplicar:
-                anios = sorted(set(Medicion.objects.filter(indicador=ind, estado=Medicion.OBS)
+                anios = sorted(set(Medicion.objects.filter(indicador=ind, estado=Medicion.OBS, simulado=False)
                                    .values_list("periodo__anio", flat=True)))
                 ind.ref_l, ind.ref_u = l, u
                 ind.fuente_referencia = fuente

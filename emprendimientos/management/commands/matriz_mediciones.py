@@ -95,6 +95,7 @@ class Command(BaseCommand):
                 med = {m.indicador_id: m for m in p.mediciones.all()}
                 for i in indicadores:
                     m = med.get(i.pk)
+                    m = None if m and m.simulado else m  # la plantilla solo lleva datos reales
                     w.writerow([
                         p.pk, p.emprendimiento.ruc, p.emprendimiento.nombre, p.anio, i.codigo,
                         i.variable.dimension.codigo, i.nombre, i.formula, i.unidad,
@@ -166,6 +167,7 @@ class Command(BaseCommand):
                 "fuente": fuente[:160], "observaciones": evidencia[:300],
                 "fecha_medicion": (fila.get("fecha") or "").strip() or None,
                 "responsable": (fila.get("responsable") or "").strip()[:120],
+                "simulado": False,
             }
             existe = Medicion.objects.filter(periodo=periodo, indicador=indicadores[codigo]).exists()
             nuevas += not existe

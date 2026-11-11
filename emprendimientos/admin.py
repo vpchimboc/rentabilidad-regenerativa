@@ -7,7 +7,7 @@ class MedicionInline(admin.TabularInline):
     model = Medicion
     extra = 0
     autocomplete_fields = ["indicador"]
-    fields = ("indicador", "estado", "valor", "numerador", "denominador", "fuente", "fecha_medicion", "responsable", "observaciones")
+    fields = ("indicador", "estado", "valor", "numerador", "denominador", "fuente", "fecha_medicion", "responsable", "observaciones", "simulado")
 
 
 class SalvaguardaInline(admin.TabularInline):
@@ -47,7 +47,7 @@ class PeriodoAdmin(admin.ModelAdmin):
 @admin.register(Medicion)
 class MedicionAdmin(admin.ModelAdmin):
     list_display = ("periodo", "indicador", "estado", "valor", "puntuacion_z", "fuente")
-    list_filter = ("estado", "indicador__variable__dimension", "periodo__emprendimiento")
+    list_filter = ("simulado", "estado", "indicador__variable__dimension", "periodo__emprendimiento")
 
     @admin.display(description="z")
     def puntuacion_z(self, obj):

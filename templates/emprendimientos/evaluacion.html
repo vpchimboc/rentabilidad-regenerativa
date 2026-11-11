@@ -16,6 +16,10 @@
   </form>
 </div>
 
+{% if simulados %}
+<div class="alerta warning">{% icono "triangle-alert" %}<span>Esta evaluación usa {{ simulados|length }} KPI con valores <strong>simulados</strong>. El resultado es un escenario de ensayo, no una medición verificada de la empresa.</span></div>
+{% endif %}
+
 {# 1. Dimensiones y cobertura #}
 <section class="tarjeta" aria-labelledby="t-dims">
   <h2 id="t-dims">{% icono "layers" %} 1. Puntuación y cobertura por dimensión</h2>
@@ -120,7 +124,7 @@
         <tr>
           <td><code>{{ f.indicador.codigo }}</code></td>
           <td>{{ f.indicador.nombre }}</td>
-          <td>{% if f.estado == "OBS" %}<span class="etq exito">OBS</span>{% if f.derivado %} <span class="etq info" title="Calculado con ventas y costos del período">derivado</span>{% endif %}{% elif f.estado == "NA" %}<span class="etq info">NA</span>{% else %}<span class="etq neutro">ND</span>{% endif %}</td>
+          <td>{% if f.indicador.codigo in simulados %}<span class="etq alerta" title="Valor simulado">SIMULADO</span>{% elif f.estado == "OBS" %}<span class="etq exito">OBS</span>{% if f.derivado %} <span class="etq info" title="Calculado con ventas y costos del período">derivado</span>{% endif %}{% elif f.estado == "NA" %}<span class="etq info">NA</span>{% else %}<span class="etq neutro">ND</span>{% endif %}</td>
           <td class="num">{% if f.valor is None %}—{% else %}{{ f.valor|floatformat:4 }}{% endif %}</td>
           <td class="nota">{{ f.indicador.unidad }}</td>
           <td class="num">{% if f.z is not None %}{{ f.z|floatformat:3 }}{% elif f.estado == "OBS" %}<span class="nota" title="Sin referencias L/U justificadas">sin ref.</span>{% else %}—{% endif %}</td>

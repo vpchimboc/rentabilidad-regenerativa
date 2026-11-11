@@ -100,7 +100,7 @@ def evaluar_periodo(request, pk):
             elegibilidad=resultado["R_texto"],
             cuello_de_botella=resultado["cuello_de_botella"] or "",
             version=resultado["version"],
-            detalle=serializar(resultado),
+            detalle={**serializar(resultado), "kpi_simulados": sorted(periodo.simulados())},
         )
         messages.success(request, f"Evaluación guardada: {resultado['veredicto']}.")
         return redirect("emprendimiento_detalle", pk=periodo.emprendimiento_id)
@@ -113,5 +113,6 @@ def evaluar_periodo(request, pk):
             "r": resultado,
             "elasticidades": elasticidades,
             "rna": predecir(mediciones),
+            "simulados": periodo.simulados(),
         },
     )

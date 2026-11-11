@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from delphi.models import Dictamen, Experto, Item, ResultadoRonda, Respuesta, Ronda
+from delphi.models import CambioItem, Dictamen, Experto, Item, ResultadoRonda, Respuesta, Ronda
 
 
 @admin.register(Experto)
@@ -45,3 +45,9 @@ class ResultadoRondaAdmin(admin.ModelAdmin):
 class DictamenAdmin(admin.ModelAdmin):
     list_display = ("ronda", "experto", "recomendacion")
     list_filter = ("ronda", "recomendacion")
+
+
+@admin.register(CambioItem)
+class CambioItemAdmin(admin.ModelAdmin):
+    list_display = ("item", "ronda", "reevaluado")
+    list_filter = ("ronda", "reevaluado")

@@ -10,7 +10,8 @@ class Experto(models.Model):
     nombre = models.CharField(max_length=160)
     institucion = models.CharField(max_length=160, blank=True)
     pais = models.CharField(max_length=80, default="Ecuador")
-    grado = models.CharField(max_length=3, choices=GRADOS, default="PHD")
+    grado = models.CharField(max_length=3, choices=GRADOS, blank=True, default="",
+                             help_text="Dejar vacío si aún no se ha registrado")
     area = models.CharField(
         max_length=160, blank=True, help_text="Ingeniería Industrial, sostenibilidad, emprendimiento"
     )
@@ -135,3 +136,23 @@ class ResultadoRonda(models.Model):
 
     def __str__(self):
         return f"Resultado {self.ronda} · W={self.kendall_w:.3f}"
+
+
+class CambioItem(models.Model):
+    """Trazabilidad de ajustes entre rondas (Tabla S4 del informe Delphi)."""
+
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="cambios")
+    ronda = models.ForeignKey(Ronda, on_delete=models.CASCADE, related_name="cambios",
+                              help_text="Ronda en la que se detectó el hallazgo")
+    hallazgo = models.TextField("Hallazgo de la ronda", help_text="Comentario resumido y anónimo de los expertos")
+    cambio = models.TextField("Cambio aplicado", blank=True, help_text="Redacción original → nueva")
+    justificacion = models.TextField("Justificación", blank=True)
+    reevaluado = models.BooleanField("Reevaluado en la ronda siguiente", default=False)
+
+    class Meta:
+        ordering = ["ronda__numero", "item__orden"]
+        verbose_name = "cambio entre rondas"
+        verbose_name_plural = "cambios entre rondas"
+
+    def __str__(self):
+        return f"R{self.ronda.numero} · {self.item.codigo}"

@@ -279,3 +279,11 @@ def ronda_eliminar(request, pk):
         messages.success(request, f"Ronda {ronda.numero} eliminada con sus {n} respuestas.")
         return redirect("delphi_panel")
     return render(request, "delphi/ronda_eliminar.html", {"ronda": ronda})
+
+
+def informe_word(request):
+    """Informe Delphi (Anexo S1) en Word, con las respuestas registradas."""
+    from django.http import FileResponse
+    from delphi.informe import generar
+    registrar("EXPORTAR", request.user if request.user.is_authenticated else None, "Delphi", "Informe Delphi (Word)")
+    return FileResponse(generar(), as_attachment=True, filename="Anexo_S1_Resultados_Delphi_FRR.docx")

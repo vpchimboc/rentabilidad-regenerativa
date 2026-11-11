@@ -101,3 +101,36 @@ class RondasTest(TestCase):
         self.client.post(f"/delphi/rondas/{r.pk}/editar/", {"numero": 3, "fecha": "2026-12-01", "estado": "CER"})
         r.refresh_from_db()
         self.assertEqual((r.fecha, r.estado), (datetime.date(2026, 12, 1), "CER"))
+
+
+class InformeWordTest(TestCase):
+    def setUp(self):
+        from io import StringIO
+        from django.core.management import call_command
+        call_command("cargar_framework", stdout=StringIO())
+
+    def _texto(self, r):
+        import io
+        from docx import Document
+        doc = Document(io.BytesIO(b"".join(r.streaming_content)))
+        return "\n".join([p.text for p in doc.paragraphs] + [c.text for t in doc.tables for f in t.rows for c in f.cells])
+
+    def test_sin_respuestas_marca_pendiente(self):
+        texto = self._texto(self.client.get("/delphi/informe/"))
+        self.assertIn("SIN RESPUESTAS REGISTRADAS", texto)
+        self.assertIn("Tabla S5", texto)
+
+    def test_con_dos_rondas_calcula_y_decide(self):
+        import datetime
+        from delphi.models import Experto, Item, Respuesta, Ronda
+        r1 = Ronda.objects.create(numero=1, fecha=datetime.date(2026, 11, 1))
+        r2 = Ronda.objects.create(numero=2, fecha=datetime.date(2026, 11, 20))
+        p01 = Item.objects.get(codigo="P01")
+        for n, (a, b) in enumerate([(3, 4), (4, 5), (5, 5)]):
+            e = Experto.objects.create(nombre=f"E{n}", anios_experiencia=10)
+            Respuesta.objects.create(ronda=r1, experto=e, item=p01, valor=a)
+            Respuesta.objects.create(ronda=r2, experto=e, item=p01, valor=b)
+        texto = self._texto(self.client.get("/delphi/informe/"))
+        self.assertIn("66,7 %", texto)   # acuerdo R1
+        self.assertIn("100,0 %", texto)  # acuerdo R2
+        self.assertIn("Aceptar", texto)

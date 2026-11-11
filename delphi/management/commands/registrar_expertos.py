@@ -4,8 +4,8 @@
     manage.py registrar_expertos --aplicar    → registra el panel y elimina a los demás expertos,
                                                 con sus respuestas, dictámenes y resultados de ronda
 
-Solo se registran los datos aportados por la investigación. Años de experiencia y publicaciones
-quedan en 0 hasta completarlos en el administrador (sin ellos no se marca «cumple criterios»).
+Solo se registran los datos aportados por la investigación. Grado (si no se conoce), años de
+experiencia y publicaciones quedan vacíos o en 0 hasta completarlos en el administrador (sin ellos no se marca «cumple criterios»).
 """
 
 from django.core.management.base import BaseCommand
@@ -31,6 +31,20 @@ PANEL = [
         "pais": "",
         "area": "Ingeniero Industrial · Máster en Administración y Dirección de Empresas · "
                 "Doctorado en Negocios Sostenibles",
+    },
+    {
+        "nombre": "Diego Armando Cale Pillco",
+        "grado": "",
+        "institucion": "Instituto Superior Tecnológico del Azuay · Docente",
+        "pais": "Ecuador",
+        "area": "",
+    },
+    {
+        "nombre": "Verónica Paulina Chimbo Coronel",
+        "grado": "",
+        "institucion": "Instituto Superior Tecnológico del Azuay · Docente",
+        "pais": "Ecuador",
+        "area": "",
     },
 ]
 

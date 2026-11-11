@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titulo %}Eliminar ronda{% endblock %}
+{% load iconos %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'delphi_panel' %}">Validación Delphi</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Eliminar ronda {{ ronda.numero }}</span>{% endblock %}
+
+{% block contenido %}
+<section class="tarjeta">
+  <h1>¿Eliminar la ronda {{ ronda.numero }}?</h1>
+  <div class="alerta warning">{% icono "triangle-alert" %}<span>Se eliminarán también sus
+    {{ ronda.respuestas.count }} respuestas, las respuestas abiertas y sus resultados. Esta acción no se puede deshacer.</span></div>
+  <form method="post">{% csrf_token %}
+    <button class="boton" type="submit">Eliminar definitivamente</button>
+    <a class="boton sec" href="{% url 'delphi_panel' %}">Cancelar</a>
+  </form>
+</section>
+{% endblock %}

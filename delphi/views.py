@@ -233,3 +233,49 @@ def reporte(request, pk):
             w.writerow([d.experto.nombre, d.get_recomendacion_display(), d.cambio_prioritario])
         return r
     return render(request, "delphi/reporte.html", datos)
+
+
+# ---------------- Administración de rondas ----------------
+class RondaForm(forms.ModelForm):
+    class Meta:
+        model = Ronda
+        fields = ["numero", "fecha", "estado", "observaciones"]
+        labels = {"numero": "Número de ronda", "fecha": "Fecha de aplicación"}
+        widgets = {"fecha": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+                   "observaciones": forms.Textarea(attrs={"rows": 3})}
+
+
+@requiere_permiso("delphi.add_ronda")
+def ronda_nueva(request):
+    return _ronda_form(request, None)
+
+
+@requiere_permiso("delphi.change_ronda")
+def ronda_editar(request, pk):
+    return _ronda_form(request, get_object_or_404(Ronda, pk=pk))
+
+
+def _ronda_form(request, ronda):
+    import datetime
+    from django.db.models import Max
+    inicial = None if ronda else {"numero": (Ronda.objects.aggregate(m=Max("numero"))["m"] or 0) + 1,
+                                  "fecha": datetime.date.today()}
+    form = RondaForm(request.POST or None, instance=ronda, initial=inicial)
+    if request.method == "POST" and form.is_valid():
+        r = form.save()
+        registrar("CONFIG", request.user, "Ronda", f"{'Editada' if ronda else 'Creada'}: ronda {r.numero} ({r.fecha})")
+        messages.success(request, f"Ronda {r.numero} {'actualizada' if ronda else 'creada'}.")
+        return redirect("delphi_panel")
+    return render(request, "delphi/ronda_form.html", {"form": form, "ronda": ronda})
+
+
+@requiere_permiso("delphi.delete_ronda")
+def ronda_eliminar(request, pk):
+    ronda = get_object_or_404(Ronda, pk=pk)
+    if request.method == "POST":
+        n = ronda.respuestas.count()
+        ronda.delete()
+        registrar("CONFIG", request.user, "Ronda", f"Eliminada: ronda {ronda.numero} ({n} respuestas)")
+        messages.success(request, f"Ronda {ronda.numero} eliminada con sus {n} respuestas.")
+        return redirect("delphi_panel")
+    return render(request, "delphi/ronda_eliminar.html", {"ronda": ronda})

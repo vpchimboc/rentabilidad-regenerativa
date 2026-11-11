@@ -14,7 +14,8 @@
 
 <div class="split">
   <section class="tarjeta">
-    <h2>Rondas</h2>
+    <div class="tarjeta-cab"><h2>Rondas</h2>
+      {% if perms.delphi.add_ronda %}<a class="boton" href="{% url 'delphi_ronda_nueva' %}">Crear ronda</a>{% endif %}</div>
     <div class="tscroll">
       <table>
         <thead><tr><th class="num">Ronda</th><th>Fecha</th><th>Estado</th>
@@ -30,11 +31,12 @@
               <a class="boton sec" href="{% url 'delphi_cuestionario' r.pk %}">Cuestionario</a>
               <a class="boton sec" href="{% url 'delphi_resultado' r.pk %}">Resultados</a>
               <a class="boton" href="{% url 'delphi_reporte' r.pk %}">Reporte</a>
+              {% if perms.delphi.change_ronda %}<a class="boton sec" href="{% url 'delphi_ronda_editar' r.pk %}">Editar</a>{% endif %}
+              {% if perms.delphi.delete_ronda %}<a class="boton sec" href="{% url 'delphi_ronda_eliminar' r.pk %}">Eliminar</a>{% endif %}
             </td>
           </tr>
         {% empty %}
-          <tr><td colspan="5" class="nota">No hay rondas. Créelas desde el
-            <a href="/admin/delphi/ronda/add/">panel de administración</a>.</td></tr>
+          <tr><td colspan="5" class="nota">No hay rondas. Use «Crear ronda».</td></tr>
         {% endfor %}
         </tbody>
       </table>

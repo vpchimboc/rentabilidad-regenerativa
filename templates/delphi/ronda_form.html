@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titulo %}{% if ronda %}Editar ronda{% else %}Nueva ronda{% endif %}{% endblock %}
+{% load iconos %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'delphi_panel' %}">Validación Delphi</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">{% if ronda %}Editar ronda {{ ronda.numero }}{% else %}Nueva ronda{% endif %}</span>{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">Rondas de evaluación</p>
+  <h1>{% if ronda %}Ronda {{ ronda.numero }}{% else %}Crear ronda{% endif %}</h1>
+</section>
+<section class="tarjeta">
+  <form method="post">{% csrf_token %}
+    {% for campo in form %}
+      <div style="margin-bottom:12px">
+        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        {% if campo.help_text %}<p class="nota">{{ campo.help_text }}</p>{% endif %}
+        {% if campo.errors %}<p class="nota" style="color:#b42318">{{ campo.errors|join:" " }}</p>{% endif %}
+      </div>
+    {% endfor %}
+    <button class="boton" type="submit">{% icono "check" "ico-sm" %}Guardar</button>
+    <a class="boton sec" href="{% url 'delphi_panel' %}">Cancelar</a>
+  </form>
+</section>
+{% endblock %}

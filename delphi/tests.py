@@ -87,3 +87,17 @@ class ReporteYExpertosTest(TestCase):
         self.assertTrue(e.cumple_criterios)
         self.client.post(f"/delphi/expertos/{e.pk}/eliminar/")
         self.assertFalse(Experto.objects.exists())
+
+
+class RondasTest(TestCase):
+    def test_crear_y_editar_fecha(self):
+        import datetime
+        from django.contrib.auth import get_user_model
+        from delphi.models import Ronda
+        self.assertEqual(self.client.post("/delphi/rondas/nueva/", {}).status_code, 302)  # sin sesión → login
+        self.client.force_login(get_user_model().objects.create_superuser("adm", "a@a.test", "x-prueba-123"))
+        self.client.post("/delphi/rondas/nueva/", {"numero": 3, "fecha": "2026-11-20", "estado": "ABI"})
+        r = Ronda.objects.get(numero=3)
+        self.client.post(f"/delphi/rondas/{r.pk}/editar/", {"numero": 3, "fecha": "2026-12-01", "estado": "CER"})
+        r.refresh_from_db()
+        self.assertEqual((r.fecha, r.estado), (datetime.date(2026, 12, 1), "CER"))

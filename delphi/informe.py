@@ -8,8 +8,18 @@ existe en la plataforma se marca como pendiente.
 
 import datetime
 import io
+import os
+from pathlib import Path
 
-import matplotlib
+from django.conf import settings
+
+# Caché de matplotlib en una carpeta del proyecto con permiso de escritura: sin ella, el usuario del
+# servicio reconstruye la caché de fuentes en cada petición y el informe tarda o falla (502).
+_CACHE = Path(settings.BASE_DIR) / ".cache" / "matplotlib"
+_CACHE.mkdir(parents=True, exist_ok=True)
+os.environ.setdefault("MPLCONFIGDIR", str(_CACHE))
+
+import matplotlib  # noqa: E402
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402

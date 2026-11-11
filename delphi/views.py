@@ -1,5 +1,7 @@
 from django.contrib import messages
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from delphi.models import Dictamen, Experto, Item, ResultadoRonda, Respuesta, Ronda
 from delphi.stats import UMBRAL_IVC, UMBRAL_W, analizar_ronda
@@ -20,6 +22,12 @@ def panel(request):
     )
 
 
+def ya_evaluo_en(ronda, experto):
+    """¿El experto ya envió su evaluación en esta ronda?"""
+    return (Respuesta.objects.filter(ronda=ronda, experto=experto).exists()
+            or Dictamen.objects.filter(ronda=ronda, experto=experto).exists())
+
+
 def cuestionario(request, pk):
     """Captura de las valoraciones Likert de un experto en una ronda."""
     ronda = get_object_or_404(Ronda, pk=pk)
@@ -28,29 +36,42 @@ def cuestionario(request, pk):
     experto_id = request.POST.get("experto") or request.GET.get("experto")
     experto = Experto.objects.filter(pk=experto_id).first() if experto_id else None
 
+    ya_evaluo = bool(experto) and ya_evaluo_en(ronda, experto)
+    cerrada = ronda.estado == Ronda.CERRADA
+
     if request.method == "POST" and experto and request.POST.get("guardar"):
-        guardadas = 0
+        # Una sola evaluación por experto y ronda: no se sobrescribe lo ya enviado.
+        volver = f"{reverse('delphi_cuestionario', args=[ronda.pk])}?experto={experto.pk}"
+        if cerrada:
+            messages.error(request, f"La ronda {ronda.numero} está cerrada: no admite nuevas evaluaciones.")
+            return redirect(volver)
+        if ya_evaluo:
+            messages.error(request, f"{experto.nombre} ya evaluó la ronda {ronda.numero}. "
+                                    "Cada experto evalúa una sola vez por ronda.")
+            return redirect(volver)
+        valores = {}
         for item in items:
             valor = request.POST.get(f"item_{item.id}")
-            if not valor:
-                continue
-            Respuesta.objects.update_or_create(
-                ronda=ronda,
-                experto=experto,
-                item=item,
-                defaults={
-                    "valor": int(valor),
-                    "comentario": request.POST.get(f"comentario_{item.id}", ""),
-                },
-            )
-            guardadas += 1
-        Dictamen.objects.update_or_create(
-            ronda=ronda, experto=experto,
-            defaults={"cambio_prioritario": request.POST.get("cambio_prioritario", "").strip(),
-                      "recomendacion": request.POST.get("recomendacion", "")
-                      if request.POST.get("recomendacion") in dict(Dictamen.RECOMENDACIONES) else ""},
-        )
-        messages.success(request, f"{guardadas} valoraciones registradas para {experto.nombre}.")
+            if valor:
+                if valor not in {"1", "2", "3", "4", "5"}:
+                    messages.error(request, f"Valoración inválida en {item.codigo}.")
+                    return redirect(volver)
+                valores[item] = int(valor)
+        recomendacion = request.POST.get("recomendacion", "")
+        recomendacion = recomendacion if recomendacion in dict(Dictamen.RECOMENDACIONES) else ""
+        cambio = request.POST.get("cambio_prioritario", "").strip()
+        if not valores and not recomendacion and not cambio:
+            messages.error(request, "El cuestionario está vacío: no se registró ninguna respuesta.")
+            return redirect(volver)
+        with transaction.atomic():
+            for item, valor in valores.items():
+                Respuesta.objects.create(ronda=ronda, experto=experto, item=item, valor=valor,
+                                         comentario=request.POST.get(f"comentario_{item.id}", "").strip())
+            Dictamen.objects.create(ronda=ronda, experto=experto, cambio_prioritario=cambio,
+                                    recomendacion=recomendacion)
+        registrar("CONFIG", request.user if request.user.is_authenticated else None, "Respuesta",
+                  f"Evaluación registrada: {experto.nombre}, ronda {ronda.numero} ({len(valores)} valoraciones)")
+        messages.success(request, f"{len(valores)} valoraciones registradas para {experto.nombre}.")
         return redirect("delphi_resultado", pk=ronda.pk)
 
     previas = {}
@@ -76,7 +97,8 @@ def cuestionario(request, pk):
     return render(
         request,
         "delphi/cuestionario.html",
-        {"ronda": ronda, "filas": filas, "expertos": expertos, "experto": experto,
+        {"ronda": ronda, "filas": filas, "experto": experto, "ya_evaluo": ya_evaluo, "cerrada": cerrada,
+         "expertos": [(e, ya_evaluo_en(ronda, e)) for e in expertos],
          "dictamen": Dictamen.objects.filter(ronda=ronda, experto=experto).first() if experto else None,
          "recomendaciones": Dictamen.RECOMENDACIONES},
     )
@@ -287,3 +309,19 @@ def informe_word(request):
     from delphi.informe import generar
     registrar("EXPORTAR", request.user if request.user.is_authenticated else None, "Delphi", "Informe Delphi (Word)")
     return FileResponse(generar(), as_attachment=True, filename="Anexo_S1_Resultados_Delphi_FRR.docx")
+
+
+@requiere_permiso("delphi.delete_respuesta")
+def habilitar_reevaluacion(request, pk, experto_pk):
+    """Anula la evaluación de un experto en una ronda (con confirmación) para que pueda volver a responder."""
+    ronda, experto = get_object_or_404(Ronda, pk=pk), get_object_or_404(Experto, pk=experto_pk)
+    if request.method == "POST":
+        n, _ = Respuesta.objects.filter(ronda=ronda, experto=experto).delete()
+        Dictamen.objects.filter(ronda=ronda, experto=experto).delete()
+        ResultadoRonda.objects.filter(ronda=ronda).delete()
+        registrar("CONFIG", request.user, "Respuesta",
+                  f"Evaluación anulada para reevaluar: {experto.nombre}, ronda {ronda.numero} ({n} respuestas)")
+        messages.success(request, f"Se anuló la evaluación de {experto.nombre} en la ronda {ronda.numero}.")
+        return redirect(f"{reverse('delphi_cuestionario', args=[ronda.pk])}?experto={experto.pk}")
+    return render(request, "delphi/habilitar_reevaluacion.html", {
+        "ronda": ronda, "experto": experto, "n": Respuesta.objects.filter(ronda=ronda, experto=experto).count()})

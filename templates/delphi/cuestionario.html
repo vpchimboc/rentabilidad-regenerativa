@@ -19,8 +19,8 @@
       <label for="experto">Experto que responde</label>
       <select id="experto" name="experto">
         <option value="">— seleccione —</option>
-        {% for e in expertos %}
-          <option value="{{ e.pk }}" {% if experto and experto.pk == e.pk %}selected{% endif %}>{{ e.nombre }}</option>
+        {% for e, evaluo in expertos %}
+          <option value="{{ e.pk }}" {% if experto and experto.pk == e.pk %}selected{% endif %}>{{ e.nombre }}{% if evaluo %} — ya evaluó{% endif %}</option>
         {% endfor %}
       </select>
     </div>
@@ -28,9 +28,18 @@
   </form>
 </section>
 
+{% if cerrada %}
+<div class="alerta warning">{% icono "triangle-alert" %}<span>La ronda {{ ronda.numero }} está cerrada: solo se pueden consultar las respuestas.</span></div>
+{% endif %}
+{% if experto and ya_evaluo %}
+<div class="alerta info">{% icono "info" %}<span><b>{{ experto.nombre }} ya evaluó esta ronda.</b> Cada experto evalúa una
+  sola vez por ronda; sus respuestas se muestran solo para consulta.
+  {% if perms.delphi.delete_respuesta %}<a href="{% url 'delphi_reevaluar' ronda.pk experto.pk %}">Anular su evaluación para que vuelva a responder</a>.{% endif %}</span></div>
+{% endif %}
 {% if experto %}
 <section class="tarjeta">
   <form method="post">{% csrf_token %}
+  <fieldset {% if ya_evaluo or cerrada %}disabled{% endif %} style="border:0;padding:0;margin:0;min-width:0">
     <input type="hidden" name="experto" value="{{ experto.pk }}">
     <div class="tscroll">
       <table>
@@ -67,9 +76,11 @@
       {% endfor %}
     </fieldset>
     <p style="margin-top:12px">
-      <button class="boton" type="submit" name="guardar" value="1">Guardar valoraciones</button>
-      <a class="boton sec" href="{% url 'delphi_resultado' ronda.pk %}">Ver resultados de la ronda</a>
+      <button class="boton" type="submit" name="guardar" value="1"
+        onclick="return confirm('Cada experto evalúa una sola vez por ronda. ¿Enviar la evaluación definitiva?')">Enviar evaluación</button>
     </p>
+  </fieldset>
+    <p><a class="boton sec" href="{% url 'delphi_resultado' ronda.pk %}">Ver resultados de la ronda</a></p>
   </form>
 </section>
 {% else %}

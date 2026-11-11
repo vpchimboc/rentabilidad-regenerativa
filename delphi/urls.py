@@ -7,6 +7,7 @@ urlpatterns = [
     path("ronda/<int:pk>/cuestionario/", views.cuestionario, name="delphi_cuestionario"),
     path("ronda/<int:pk>/resultado/", views.resultado, name="delphi_resultado"),
     path("ronda/<int:pk>/reporte/", views.reporte, name="delphi_reporte"),
+    path("ronda/<int:pk>/experto/<int:experto_pk>/reevaluar/", views.habilitar_reevaluacion, name="delphi_reevaluar"),
     path("informe/", views.informe_word, name="delphi_informe"),
     path("rondas/nueva/", views.ronda_nueva, name="delphi_ronda_nueva"),
     path("rondas/<int:pk>/editar/", views.ronda_editar, name="delphi_ronda_editar"),

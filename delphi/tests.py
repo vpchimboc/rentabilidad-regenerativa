@@ -134,3 +134,52 @@ class InformeWordTest(TestCase):
         self.assertIn("66,7 %", texto)   # acuerdo R1
         self.assertIn("100,0 %", texto)  # acuerdo R2
         self.assertIn("Aceptar", texto)
+
+
+class UnaEvaluacionPorRondaTest(TestCase):
+    """Cada experto evalúa una sola vez por ronda; una ronda cerrada no admite evaluaciones."""
+
+    def setUp(self):
+        import datetime
+        from io import StringIO
+        from django.core.management import call_command
+        from delphi.models import Experto, Item, Ronda
+        call_command("cargar_framework", stdout=StringIO())
+        self.ronda = Ronda.objects.create(numero=7, fecha=datetime.date(2026, 11, 12))
+        self.experto = Experto.objects.create(nombre="Experto X")
+        self.p01 = Item.objects.get(codigo="P01")
+        self.url = f"/delphi/ronda/{self.ronda.pk}/cuestionario/"
+
+    def _enviar(self, valor):
+        return self.client.post(self.url, {"experto": self.experto.pk, "guardar": "1",
+                                           f"item_{self.p01.pk}": str(valor), "recomendacion": "SI"})
+
+    def test_segundo_envio_no_sobrescribe(self):
+        from delphi.models import Dictamen, Respuesta
+        self._enviar(5)
+        self._enviar(1)
+        self.assertEqual(list(Respuesta.objects.values_list("valor", flat=True)), [5])
+        self.assertEqual(Dictamen.objects.count(), 1)
+        self.assertContains(self.client.get(f"{self.url}?experto={self.experto.pk}"), "ya evaluó esta ronda")
+
+    def test_ronda_cerrada_y_envio_vacio(self):
+        from delphi.models import Respuesta, Ronda
+        self.client.post(self.url, {"experto": self.experto.pk, "guardar": "1"})
+        self.assertFalse(Respuesta.objects.exists())
+        self.ronda.estado = Ronda.CERRADA
+        self.ronda.save()
+        self._enviar(4)
+        self.assertFalse(Respuesta.objects.exists())
+
+    def test_anular_exige_permiso_y_habilita(self):
+        from django.contrib.auth import get_user_model
+        from delphi.models import Respuesta
+        self._enviar(5)
+        url = f"/delphi/ronda/{self.ronda.pk}/experto/{self.experto.pk}/reevaluar/"
+        self.client.post(url)
+        self.assertEqual(Respuesta.objects.count(), 1)  # sin sesión: no anula
+        self.client.force_login(get_user_model().objects.create_superuser("adm", "a@a.test", "x-prueba-123"))
+        self.client.post(url)
+        self.assertFalse(Respuesta.objects.exists())
+        self._enviar(3)
+        self.assertEqual(list(Respuesta.objects.values_list("valor", flat=True)), [3])

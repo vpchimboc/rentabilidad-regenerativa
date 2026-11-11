@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Anular evaluación{% endblock %}
+{% load iconos %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<a href="{% url 'delphi_panel' %}">Validación Delphi</a>{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Anular evaluación</span>{% endblock %}
+
+{% block contenido %}
+<section class="tarjeta">
+  <h1>¿Anular la evaluación de {{ experto.nombre }} en la ronda {{ ronda.numero }}?</h1>
+  <div class="alerta warning">{% icono "triangle-alert" %}<span>Se eliminarán sus {{ n }} valoraciones y sus respuestas
+    abiertas de esta ronda para que pueda responder de nuevo. Úselo solo para corregir un error de registro; queda
+    constancia en la auditoría.</span></div>
+  <form method="post">{% csrf_token %}
+    <button class="boton" type="submit">Anular y habilitar nueva evaluación</button>
+    <a class="boton sec" href="{% url 'delphi_cuestionario' ronda.pk %}?experto={{ experto.pk }}">Cancelar</a>
+  </form>
+</section>
+{% endblock %}

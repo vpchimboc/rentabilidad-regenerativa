@@ -243,7 +243,7 @@ class VistasTest(TestCase):
 
         ronda = Ronda.objects.get(numero=1)
         experto = Experto.objects.first()
-        item = Item.objects.get(codigo="I01")
+        item = Item.objects.get(codigo="P01")
         url = reverse("delphi_cuestionario", args=[ronda.pk])
 
         self.assertEqual(self.client.get(url, {"experto": experto.pk}).status_code, 200)

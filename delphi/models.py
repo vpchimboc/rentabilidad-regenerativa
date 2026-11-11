@@ -57,6 +57,8 @@ class Item(models.Model):
         ("COH", "Coherencia"),
         ("APL", "Aplicabilidad"),
         ("FAC", "Factibilidad"),
+        ("MED", "Medibilidad"),
+        ("RIG", "Rigor técnico"),
     ]
 
     codigo = models.CharField(max_length=10, unique=True)
@@ -66,6 +68,8 @@ class Item(models.Model):
     criterio = models.CharField(max_length=3, choices=CRITERIOS)
     enunciado = models.TextField()
     orden = models.PositiveSmallIntegerField(default=0)
+    origen = models.TextField(blank=True, help_text="Origen específico de la pregunta y por qué se formula")
+    activo = models.BooleanField(default=True, help_text="Solo los ítems activos aparecen en el cuestionario")
 
     class Meta:
         ordering = ["orden", "codigo"]
@@ -91,6 +95,30 @@ class Respuesta(models.Model):
 
     def __str__(self):
         return f"R{self.ronda.numero} · {self.experto.nombre} · {self.item.codigo} = {self.valor}"
+
+
+class Dictamen(models.Model):
+    """Preguntas abiertas del cuestionario (P13 y P14): una por experto y ronda."""
+
+    SI, AJUSTES, NO = "SI", "AJU", "NO"
+    RECOMENDACIONES = [(SI, "Sí"), (AJUSTES, "Sí, con ajustes"), (NO, "No")]
+
+    ronda = models.ForeignKey(Ronda, on_delete=models.CASCADE, related_name="dictamenes")
+    experto = models.ForeignKey(Experto, on_delete=models.CASCADE, related_name="dictamenes")
+    cambio_prioritario = models.TextField(
+        "P13. Cambio prioritario", blank=True,
+        help_text="¿Qué cambio considera prioritario en el Framework o en algún KPI? Código y justificación")
+    recomendacion = models.CharField(
+        "P14. ¿Recomienda mantener el FRR para evaluación exploratoria?", max_length=3,
+        choices=RECOMENDACIONES, blank=True)
+
+    class Meta:
+        unique_together = [("ronda", "experto")]
+        verbose_name = "dictamen del experto (P13–P14)"
+        verbose_name_plural = "dictámenes de los expertos (P13–P14)"
+
+    def __str__(self):
+        return f"R{self.ronda.numero} · {self.experto.nombre} · {self.get_recomendacion_display() or 'sin respuesta'}"
 
 
 class ResultadoRonda(models.Model):

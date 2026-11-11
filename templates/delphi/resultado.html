@@ -76,6 +76,19 @@
   {% endif %}
 </section>
 
+{% if dictamenes %}
+<section class="tarjeta">
+  <h2>Respuestas abiertas (P13 y P14)</h2>
+  <div class="tscroll"><table>
+    <thead><tr><th>Experto</th><th>P14. ¿Mantener el FRR para evaluación exploratoria?</th><th>P13. Cambio prioritario</th></tr></thead>
+    <tbody>{% for d in dictamenes %}
+      <tr><td>{{ d.experto.nombre }}</td><td>{{ d.get_recomendacion_display|default:"—" }}</td>
+        <td>{{ d.cambio_prioritario|default:"—"|linebreaksbr }}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
+
 <section class="tarjeta">
   <h2>Fórmulas aplicadas</h2>
   <div class="formula">IVC(ítem) = (nº de expertos que califican 4 o 5) / (nº total de expertos)

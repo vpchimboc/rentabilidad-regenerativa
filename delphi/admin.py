@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from delphi.models import Experto, Item, ResultadoRonda, Respuesta, Ronda
+from delphi.models import Dictamen, Experto, Item, ResultadoRonda, Respuesta, Ronda
 
 
 @admin.register(Experto)
@@ -22,7 +22,8 @@ class RondaAdmin(admin.ModelAdmin):
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
-    list_display = ("codigo", "criterio", "componente", "orden")
+    list_display = ("codigo", "criterio", "componente", "orden", "activo")
+    list_filter = ("activo", "criterio")
     list_filter = ("criterio",)
     search_fields = ("codigo", "enunciado")
 
@@ -38,3 +39,9 @@ class RespuestaAdmin(admin.ModelAdmin):
 class ResultadoRondaAdmin(admin.ModelAdmin):
     list_display = ("ronda", "s_cvi", "kendall_w", "chi_cuadrado", "gl", "consenso")
     readonly_fields = ("detalle",)
+
+
+@admin.register(Dictamen)
+class DictamenAdmin(admin.ModelAdmin):
+    list_display = ("ronda", "experto", "recomendacion")
+    list_filter = ("ronda", "recomendacion")

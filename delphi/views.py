@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 
-from delphi.models import Experto, Item, ResultadoRonda, Respuesta, Ronda
+from delphi.models import Dictamen, Experto, Item, ResultadoRonda, Respuesta, Ronda
 from delphi.stats import UMBRAL_IVC, UMBRAL_W, analizar_ronda
 
 
@@ -13,7 +13,7 @@ def panel(request):
         {
             "rondas": rondas,
             "expertos": Experto.objects.all(),
-            "items": Item.objects.all(),
+            "items": Item.objects.filter(activo=True),
             "umbral_ivc": UMBRAL_IVC,
             "umbral_w": UMBRAL_W,
         },
@@ -23,7 +23,7 @@ def panel(request):
 def cuestionario(request, pk):
     """Captura de las valoraciones Likert de un experto en una ronda."""
     ronda = get_object_or_404(Ronda, pk=pk)
-    items = Item.objects.all()
+    items = Item.objects.filter(activo=True)
     expertos = Experto.objects.filter(activo=True)
     experto_id = request.POST.get("experto") or request.GET.get("experto")
     experto = Experto.objects.filter(pk=experto_id).first() if experto_id else None
@@ -44,6 +44,12 @@ def cuestionario(request, pk):
                 },
             )
             guardadas += 1
+        Dictamen.objects.update_or_create(
+            ronda=ronda, experto=experto,
+            defaults={"cambio_prioritario": request.POST.get("cambio_prioritario", "").strip(),
+                      "recomendacion": request.POST.get("recomendacion", "")
+                      if request.POST.get("recomendacion") in dict(Dictamen.RECOMENDACIONES) else ""},
+        )
         messages.success(request, f"{guardadas} valoraciones registradas para {experto.nombre}.")
         return redirect("delphi_resultado", pk=ronda.pk)
 
@@ -70,7 +76,9 @@ def cuestionario(request, pk):
     return render(
         request,
         "delphi/cuestionario.html",
-        {"ronda": ronda, "filas": filas, "expertos": expertos, "experto": experto},
+        {"ronda": ronda, "filas": filas, "expertos": expertos, "experto": experto,
+         "dictamen": Dictamen.objects.filter(ronda=ronda, experto=experto).first() if experto else None,
+         "recomendaciones": Dictamen.RECOMENDACIONES},
     )
 
 
@@ -112,5 +120,6 @@ def resultado(request, pk):
             "umbral_ivc": UMBRAL_IVC,
             "umbral_w": UMBRAL_W,
             "n_expertos": respuestas.values("experto").distinct().count(),
+            "dictamenes": ronda.dictamenes.select_related("experto"),
         },
     )

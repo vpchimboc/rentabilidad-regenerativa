@@ -171,8 +171,8 @@ class Command(BaseCommand):
             },
         )
         rng = random.Random(11)
-        for item in Item.objects.all():
-            base = 3 if item.codigo in ("I09", "I10") else 4
+        for item in Item.objects.filter(activo=True):
+            base = 3 if item.codigo in ("P08", "P09") else 4
             for experto in expertos:
                 valor = min(5, max(1, base + rng.choice([-1, 0, 0, 1])))
                 Respuesta.objects.update_or_create(
@@ -189,8 +189,8 @@ class Command(BaseCommand):
             },
         )
         rng2 = random.Random(29)
-        for item in Item.objects.all():
-            base = 4 if item.codigo in ("I09", "I10") else 5
+        for item in Item.objects.filter(activo=True):
+            base = 4 if item.codigo in ("P08", "P09") else 5
             for experto in expertos:
                 valor = min(5, max(4, base + rng2.choice([-1, 0, 0])))
                 Respuesta.objects.update_or_create(

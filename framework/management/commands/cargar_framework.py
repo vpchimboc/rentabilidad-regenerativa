@@ -149,33 +149,56 @@ CORRESPONDENCIA_V0 = [
 ]
 CODIGOS_V0 = [c[0] for c in CORRESPONDENCIA_V0]
 
+# Cuestionario breve de evaluación experta (una ronda, 3 expertos): guía «FRR_Guia_Cuestionario_Expertos_
+# Con_Formulas_42_KPI». P13 y P14 son abiertas y se registran en Dictamen. Los ítems I01–I12 de la versión
+# anterior se conservan inactivos para no perder respuestas ya registradas.
 ITEMS_DELPHI = [
-    ("I01", "CLA", "Definición del constructo",
-     "La definición de rentabilidad regenerativa (viabilidad económica, valor social, mejora ecológica neta "
-     "verificable y capacidades operacionales, sin incumplir salvaguardas) es clara y no ambigua."),
-    ("I02", "PER", "Arquitectura de cuatro dimensiones",
-     "Las dimensiones D1 económica, D2 ambiental, D3 social y D4 operacional son pertinentes para evaluar "
-     "emprendimientos de triple impacto."),
-    ("I03", "COH", "Salvaguardas no compensatorias",
-     "Exigir las condiciones G1–G5 (R = G1×G2×G3×G4×G5) antes de declarar «regeneración» es coherente con el constructo."),
-    ("I04", "COH", "Agregación geométrica",
-     "El índice IRR = Π(ε + (1−ε)·S)^α es apropiado como resultado descriptivo y no sustituye a las salvaguardas."),
-    ("I05", "PER", "Indicadores económicos (E1–E7)",
-     "Los indicadores E1–E7 capturan viabilidad, rentabilidad, liquidez y reinversión más allá del break-even."),
-    ("I06", "PER", "Indicadores ambientales (A1–A10)",
-     "Los indicadores A1–A10 distinguen presiones ambientales de resultados ecológicos netos."),
-    ("I07", "PER", "Indicadores sociales (S1–S13)",
-     "Los indicadores S1–S13 distinguen cumplimiento y prevención de daños de resultados sociales positivos."),
-    ("I08", "PER", "Indicadores operacionales (O1–O12)",
-     "Los indicadores O1–O12 miden la capacidad operacional sin duplicar los resultados financieros de D1."),
-    ("I09", "CLA", "Fórmulas y normalización",
-     "Las fórmulas de los KPI y la normalización z con referencias L/U son comprensibles y técnicamente correctas."),
-    ("I10", "FAC", "Medibilidad y cobertura",
-     "Un emprendimiento pequeño o mediano puede obtener la evidencia requerida y alcanzar la cobertura mínima por dimensión."),
-    ("I11", "APL", "Aplicabilidad en Ecuador",
-     "El framework es aplicable a emprendimientos ecuatorianos de los sectores agroindustrial, manufacturero y de servicios."),
-    ("I12", "APL", "Utilidad para decidir",
-     "Los resultados (clasificación a–e, cobertura, salvaguardas y cuello de botella) son útiles para la toma de decisiones."),
+    ("P01", "PER", "Constructo de rentabilidad regenerativa",
+     "Las cuatro dimensiones D1 económica, D2 ambiental, D3 social y D4 operacional representan adecuadamente el "
+     "constructo de rentabilidad regenerativa.",
+     "Validez conceptual de constructo; Fase 2, definición FRR. Comprueba la representación del constructo."),
+    ("P02", "COH", "D4 como capacidad habilitadora",
+     "La incorporación de D4 como capacidad habilitadora aporta valor al enfoque tradicional de triple impacto sin "
+     "duplicar las otras dimensiones.",
+     "Validez discriminante y no redundancia; matriz maestra Fase 2.10. Comprueba la contribución independiente de D4."),
+    ("P03", "COH", "Break-even frente a rentabilidad regenerativa",
+     "La distinción entre superar el break-even y demostrar rentabilidad regenerativa está conceptualmente justificada.",
+     "Principio de viabilidad necesaria, pero no suficiente; Fase 2. Comprueba el fundamento económico del modelo."),
+    ("P04", "PER", "KPI económicos (E1–E7)",
+     "Los 7 KPI económicos (E1-E7) del catálogo anexo son pertinentes para representar D1.",
+     "Validez de contenido por dimensión; matriz Fase 2.10. Comprueba la cobertura de D1."),
+    ("P05", "PER", "KPI ambientales (A1–A10)",
+     "Los 10 KPI ambientales (A1-A10) del catálogo anexo permiten distinguir reducción de impactos de regeneración "
+     "ambiental verificable.",
+     "Validez de contenido y salvaguarda A10; Fase 2.10. Comprueba la diferencia entre ecoeficiencia y regeneración."),
+    ("P06", "PER", "KPI sociales (S1–S13)",
+     "Los 13 KPI sociales (S1-S13) del catálogo anexo representan adecuadamente el valor social generado y los "
+     "riesgos sociales críticos.",
+     "Validez de contenido y salvaguardas S4/S8/S9; Fase 2.10. Comprueba la cobertura social y salvaguardas."),
+    ("P07", "PER", "KPI operacionales (O1–O12)",
+     "Los 12 KPI operacionales (O1-O12) del catálogo anexo representan capacidades operacionales medibles y "
+     "diferenciadas de los resultados de D1-D3.",
+     "Validez de contenido y no duplicidad; Fase 2.10. Comprueba la independencia operacional."),
+    ("P08", "MED", "Claridad y medibilidad de los KPI",
+     "Los indicadores propuestos tienen definiciones suficientemente claras para su medición y verificación mediante "
+     "fuentes identificables.",
+     "Claridad y medibilidad; criterios pre-Delphi Fase 2.10. Comprueba la viabilidad de medición."),
+    ("P09", "RIG", "Normalización con referencias L/U",
+     "La normalización de indicadores mediante referencias L/U y direcciones de beneficio, costo u objetivo es "
+     "apropiada, siempre que sus umbrales se justifiquen.",
+     "Validez técnica de operacionalización; Fase 2.10, Kelemen et al. 2024. Comprueba la consistencia de las puntuaciones."),
+    ("P10", "RIG", "Agregación no compensatoria y salvaguardas",
+     "La agregación del IRR debe limitar la compensación entre dimensiones y aplicar salvaguardas económicas, "
+     "ambientales y sociales.",
+     "No compensabilidad y sostenibilidad fuerte; Fase 2.10, Usubiaga-Liaño y Ekins 2024. Comprueba la no compensación de fallas críticas."),
+    ("P11", "APL", "Aplicabilidad en Ecuador",
+     "El FRR es potencialmente aplicable a emprendimientos de triple impacto en Ecuador, con ajustes de materialidad "
+     "según sector y tamaño.",
+     "Factibilidad y aplicabilidad contextual; Fase 2.10. Comprueba la aplicabilidad ecuatoriana."),
+    ("P12", "COH", "Fidelidad de la implementación informática",
+     "Para evaluar la implementación informática del FRR, es indispensable que dimensiones, códigos KPI, fórmulas y "
+     "salvaguardas coincidan con la versión científica del modelo.",
+     "Trazabilidad de implementación; contraste de plataforma pública y catálogo Fase 2.10. Comprueba la fidelidad de la implementación."),
 ]
 
 
@@ -219,14 +242,16 @@ class Command(BaseCommand):
         Variable.objects.filter(indicadores__isnull=True).delete()
         ParametrosFRR.vigentes()
 
-        for orden, (codigo, criterio, componente, enunciado) in enumerate(ITEMS_DELPHI):
+        for orden, (codigo, criterio, componente, enunciado, origen) in enumerate(ITEMS_DELPHI):
             Item.objects.update_or_create(
                 codigo=codigo,
-                defaults={"criterio": criterio, "componente": componente, "enunciado": enunciado, "orden": orden},
+                defaults={"criterio": criterio, "componente": componente, "enunciado": enunciado,
+                          "origen": origen, "orden": orden, "activo": True},
             )
+        Item.objects.exclude(codigo__in=[c for c, *_ in ITEMS_DELPHI]).update(activo=False)
 
         self.stdout.write(self.style.SUCCESS(
             f"Framework FRR 1.0 cargado: {Dimension.objects.count()} dimensiones, "
-            f"{Indicador.objects.count()} KPI candidatos, {Item.objects.count()} ítems Delphi"
+            f"{Indicador.objects.count()} KPI candidatos, {Item.objects.filter(activo=True).count()} ítems Delphi"
             + (f" · eliminados {eliminados} registros del catálogo v0" if eliminados else "") + "."
         ))

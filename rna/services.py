@@ -105,3 +105,92 @@ def predecir(mediciones, modelo=None):
         "analitico": analitico,
         "error": None if analitico is None else round(prediccion - analitico, 4),
     }
+
+
+# ---------- Modo híbrido: D1 real + D2–D4 simulado (solo para entrenar y probar la red) ----------
+# Las mediciones simuladas viven únicamente en memoria: nunca se guardan en las empresas
+# ni se muestran como datos de ellas. El modelo queda etiquetado como híbrido/simulado.
+
+DIMENSIONES_SIMULADAS = ("D2", "D3", "D4")
+
+
+def _d1_reales(periodo, entradas_d1):
+    """Valores D1 observados del período (E1 se deriva de ventas y costos); None si falta alguno."""
+    obs = periodo.mediciones_dict()
+    if obs.get("E1") is None and periodo.margen_seguridad is not None:
+        obs["E1"] = periodo.margen_seguridad
+    valores = {ind.codigo: obs.get(ind.codigo) for ind in entradas_d1}
+    return None if any(v is None for v in valores.values()) else valores
+
+
+def generar_dataset_hibrido(repeticiones=10, semilla=7):
+    """Por cada empresa real: sus KPI D1 observados + `repeticiones` escenarios simulados de D2–D4.
+
+    Los KPI de D2–D4 con L/U se sortean alrededor de sus referencias. Los que no tienen L/U
+    no puntúan; en la simulación se dan por registrados para que la cobertura refleje un
+    levantamiento completo. Etiqueta = IRR del FRR. Devuelve también el grupo (empresa)
+    de cada fila para separar entrenamiento y prueba por empresa.
+    """
+    from emprendimientos.models import Periodo
+
+    rng = random.Random(semilla)
+    dimensiones = cargar_dimensiones()
+    entradas = indicadores_entrada()
+    entradas_d1 = [i for i in entradas if i.variable.dimension.codigo not in DIMENSIONES_SIMULADAS]
+    entradas_sim = [i for i in entradas if i.variable.dimension.codigo in DIMENSIONES_SIMULADAS]
+    presencia = [
+        i.codigo for dim in dimensiones if dim.codigo in DIMENSIONES_SIMULADAS
+        for var in dim.variables.all() for i in var.indicadores.all()
+        if i.estado != Indicador.EXCLUIDO and not i.puntuable
+    ]
+    if not entradas_sim:
+        raise RNANoEntrenable("D2–D4 no tienen KPI con referencias L/U para simular.")
+    X, y, grupos, omitidas = [], [], [], 0
+    for periodo in Periodo.objects.filter(emprendimiento__isnull=False).prefetch_related("mediciones__indicador"):
+        d1 = _d1_reales(periodo, entradas_d1)
+        if d1 is None:
+            omitidas += 1
+            continue
+        for _ in range(repeticiones):
+            sim = {i.codigo: rng.uniform(*_rango(i)) for i in entradas_sim}
+            irr = evaluar({**d1, **sim, **{c: 1.0 for c in presencia}}, dimensiones)["irr"]
+            if irr is None:
+                raise RNANoEntrenable("El IRR no es calculable ni con D2–D4 simulados: revise la cobertura de D1.")
+            X.append([{**d1, **sim}[i.codigo] for i in entradas])
+            y.append(irr)
+            grupos.append(periodo.pk)
+    if not X:
+        raise RNANoEntrenable("Ninguna empresa tiene completos sus KPI económicos (D1) observados.")
+    return X, y, grupos, [i.codigo for i in entradas], omitidas
+
+
+def entrenar_hibrido(repeticiones=10, n_ocultas=8, epocas=300, lr=0.05, semilla=7, prueba=0.2):
+    """Entrena con D1 real + D2–D4 simulado y evalúa con empresas que la red no vio."""
+    X, y, grupos, codigos, omitidas = generar_dataset_hibrido(repeticiones, semilla)
+    empresas = sorted(set(grupos))
+    random.Random(semilla).shuffle(empresas)
+    reservadas = set(empresas[: max(1, int(len(empresas) * prueba))])
+    ent = [(x, t) for x, t, g in zip(X, y, grupos) if g not in reservadas]
+    pru = [(x, t) for x, t, g in zip(X, y, grupos) if g in reservadas]
+    red = MLP(len(codigos), n_ocultas=n_ocultas, semilla=semilla)
+    resultado = red.entrenar([x for x, _ in ent], [t for _, t in ent], epocas=epocas, lr=lr, semilla=semilla)
+    pred = [red.predecir(x) for x, _ in pru]
+    reales = [t for _, t in pru]
+    media = sum(reales) / len(reales)
+    ss_res = sum((p - t) ** 2 for p, t in zip(pred, reales))
+    ss_tot = sum((t - media) ** 2 for t in reales) or 1e-12
+    metricas = {
+        **resultado["metricas"],
+        "origen": "híbrido: D1 real + D2–D4 simulado",
+        "empresas_entrenamiento": len(empresas) - len(reservadas),
+        "empresas_prueba": len(reservadas),
+        "empresas_omitidas_d1_incompleto": omitidas,
+        "r2_empresas_no_vistas": round(1 - ss_res / ss_tot, 4),
+        "mae_empresas_no_vistas": round(sum(abs(p - t) for p, t in zip(pred, reales)) / len(reales), 4),
+    }
+    ModeloRNA.objects.update(activo=False)
+    return ModeloRNA.objects.create(
+        nombre="MLP híbrido (D1 real + D2–D4 simulado)", n_entradas=len(codigos), n_ocultas=n_ocultas,
+        epocas=epocas, tasa_aprendizaje=lr, n_muestras=len(X), codigos_entrada=codigos, pesos=red.a_dict(),
+        metricas=metricas, historial=resultado["historial"], activo=True,
+    )

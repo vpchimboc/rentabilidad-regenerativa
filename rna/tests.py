@@ -75,3 +75,28 @@ class ServiciosRNATest(TestCase):
         r = predecir(incompletas)
         self.assertFalse(r["aplicable"])
         self.assertEqual(r["faltan"], ["S9"])
+
+
+class EntrenamientoHibridoTest(TestCase):
+    """D1 real + D2–D4 simulado: entrena sin escribir mediciones simuladas en las empresas."""
+
+    def test_entrena_sin_guardar_datos_simulados(self):
+        from io import StringIO
+        from django.core.management import call_command
+        from emprendimientos.models import Emprendimiento, Medicion, Periodo
+        from framework.pruebas import asignar_referencias_prueba
+        from rna.services import entrenar_hibrido
+
+        call_command("cargar_framework", stdout=StringIO())
+        asignar_referencias_prueba()
+        for n in range(6):
+            p = Periodo.objects.create(emprendimiento=Emprendimiento.objects.create(nombre=f"E{n}"), anio=2025,
+                                       ventas=1000, costos_fijos=200 + 20 * n, costos_variables=500)
+            for cod in ("E2", "E3", "E4", "E5", "E6", "E7"):
+                Medicion.objects.create(periodo=p, indicador_id=__import__("framework.models", fromlist=["x"])
+                                        .Indicador.objects.get(codigo=cod).pk, valor=0.1 + 0.01 * n, fuente="t")
+        antes = Medicion.objects.count()
+        modelo = entrenar_hibrido(repeticiones=3, epocas=20)
+        self.assertEqual(Medicion.objects.count(), antes)
+        self.assertIn("simulado", modelo.metricas["origen"])
+        self.assertEqual(modelo.n_muestras, 18)

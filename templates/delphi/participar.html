@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Evaluación experta · registro{% endblock %}
+{% load iconos %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Evaluación experta del FRR</span>{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">Ronda {{ ronda.numero }} · {{ ronda.fecha|date:"d/m/Y" }}</p>
+  <h1>Evaluación experta del Framework de Rentabilidad Regenerativa</h1>
+  <p class="lede">Gracias por participar. Primero registre sus datos; después responderá un cuestionario breve de
+    12 afirmaciones (escala 1–5) y 2 preguntas abiertas. Su correo lo identifica: si vuelve a ingresar con el mismo
+    correo, continuará con su registro. Cada experto evalúa una sola vez por ronda.</p>
+</section>
+<section class="tarjeta">
+  <h2>Paso 1 de 2 · Datos del experto</h2>
+  <form method="post">{% csrf_token %}
+    {% if form.non_field_errors %}<div class="alerta warning"><span>{{ form.non_field_errors|join:" " }}</span></div>{% endif %}
+    {% for campo in form %}
+      <div style="margin-bottom:12px">
+        {% if campo.name == "consentimiento" %}
+          <label style="color:inherit">{{ campo }} {{ campo.label }}</label>
+        {% else %}
+          <label for="{{ campo.id_for_label }}">{{ campo.label }}{% if campo.field.required %} *{% endif %}</label>
+          {{ campo }}
+        {% endif %}
+        {% if campo.errors %}<p class="nota" style="color:#b42318">{{ campo.errors|join:" " }}</p>{% endif %}
+      </div>
+    {% endfor %}
+    <button class="boton" type="submit">Continuar al cuestionario</button>
+  </form>
+  <p class="nota">Sus datos se usan solo para caracterizar el panel de expertos. Las respuestas se presentan de forma anónima.</p>
+</section>
+{% endblock %}

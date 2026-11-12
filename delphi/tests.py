@@ -183,3 +183,46 @@ class UnaEvaluacionPorRondaTest(TestCase):
         self.assertFalse(Respuesta.objects.exists())
         self._enviar(3)
         self.assertEqual(list(Respuesta.objects.values_list("valor", flat=True)), [3])
+
+
+class AutorregistroTest(TestCase):
+    """Enlace público: el experto se registra, responde una vez y no se duplica por correo."""
+
+    def setUp(self):
+        import datetime
+        from io import StringIO
+        from django.core.management import call_command
+        from delphi.models import Item, Ronda
+        call_command("cargar_framework", stdout=StringIO())
+        self.ronda = Ronda.objects.create(numero=5, fecha=datetime.date(2026, 11, 12))
+        self.p10 = Item.objects.get(codigo="P10")
+        self.datos = {"nombre": "Dra. Ana Pérez", "correo": "ana@uni.test", "grado": "PHD",
+                      "institucion": "Universidad X", "pais": "Ecuador", "area": "Sostenibilidad",
+                      "anios_experiencia": 12, "publicaciones": 4, "consentimiento": "on"}
+
+    def test_registro_respuesta_unica_y_sin_duplicar(self):
+        from delphi.models import Experto, Respuesta
+        base = f"/delphi/ronda/{self.ronda.pk}"
+        self.assertRedirects(self.client.get(f"{base}/responder/"), f"{base}/participar/")
+        self.assertRedirects(self.client.post(f"{base}/participar/", self.datos), f"{base}/responder/")
+        self.assertContains(self.client.get(f"{base}/responder/"), "P10.")
+        self.client.post(f"{base}/responder/", {f"item_{self.p10.pk}": "4", "recomendacion": "AJU"})
+        self.assertContains(self.client.get(f"{base}/responder/"), "Evaluación registrada")
+        # vuelve a entrar con el mismo correo (otra sesión): no se duplica ni vuelve a evaluar
+        self.client.logout()
+        self.client.post(f"{base}/participar/", {**self.datos, "correo": "ANA@uni.test"})
+        self.client.post(f"{base}/responder/", {f"item_{self.p10.pk}": "1"})
+        self.assertEqual(Experto.objects.count(), 1)
+        self.assertEqual(list(Respuesta.objects.values_list("valor", flat=True)), [4])
+        self.assertTrue(Experto.objects.get().cumple_criterios)
+
+    def test_exige_consentimiento_y_ronda_abierta(self):
+        from delphi.models import Experto, Ronda
+        base = f"/delphi/ronda/{self.ronda.pk}"
+        self.client.post(f"{base}/participar/", {**self.datos, "consentimiento": ""})
+        self.assertFalse(Experto.objects.exists())
+        self.client.post(f"{base}/participar/", {**self.datos, "grado": "OTR"})
+        self.assertEqual(Experto.objects.get().grado, "")
+        self.ronda.estado = Ronda.CERRADA
+        self.ronda.save()
+        self.assertContains(self.client.get(f"{base}/participar/"), "Ronda cerrada")

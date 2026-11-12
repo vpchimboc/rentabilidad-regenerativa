@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titulo %}Evaluación experta · cuestionario{% endblock %}
+{% load iconos %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Evaluación experta del FRR</span>{% endblock %}
+
+{% block contenido %}
+<section>
+  <p class="eyebrow">Ronda {{ ronda.numero }} · {{ experto.nombre }}</p>
+  <h1>Paso 2 de 2 · Cuestionario</h1>
+  <p class="lede">Marque una sola opción por afirmación: 1 = muy deficiente, 2 = deficiente, 3 = aceptable,
+    4 = bueno, 5 = excelente. Si no cuenta con información suficiente, deje la pregunta sin marcar y escriba
+    «No evaluable» en el comentario; no use 3 para expresar desconocimiento.</p>
+</section>
+<section class="tarjeta">
+  <form method="post">{% csrf_token %}
+    {% for f in filas %}
+      <fieldset style="border:0;border-bottom:1px solid rgba(127,127,127,.25);padding:12px 0;margin:0;min-width:0">
+        <legend style="padding:0"><b>P{{ forloop.counter }}.</b> {{ f.item.enunciado }}</legend>
+        <div style="margin:8px 0">
+          {% for o in f.opciones %}
+            <label style="display:inline-block;margin-right:14px;color:inherit">
+              <input type="radio" name="item_{{ f.item.id }}" value="{{ o.n }}"> {{ o.n }}</label>
+          {% endfor %}
+        </div>
+        <input type="text" name="comentario_{{ f.item.id }}" placeholder="Comentario (opcional)" style="width:100%">
+      </fieldset>
+    {% endfor %}
+    <div style="margin-top:16px">
+      <label for="cambio_prioritario"><b>P13.</b> ¿Qué cambio considera prioritario en el Framework o en algún KPI?
+        Indique código y justificación.</label>
+      <textarea id="cambio_prioritario" name="cambio_prioritario" rows="4" style="width:100%"></textarea>
+    </div>
+    <fieldset style="margin-top:12px;border:0;padding:0">
+      <legend><b>P14.</b> ¿Recomienda mantener el FRR para evaluación exploratoria?</legend>
+      {% for valor, texto in recomendaciones %}
+        <label style="display:inline-block;margin-right:14px;color:inherit">
+          <input type="radio" name="recomendacion" value="{{ valor }}"> {{ texto }}</label>
+      {% endfor %}
+    </fieldset>
+    <p style="margin-top:16px">
+      <button class="boton" type="submit"
+        onclick="return confirm('Su evaluación es definitiva: cada experto evalúa una sola vez por ronda. ¿Enviar?')">Enviar evaluación</button>
+    </p>
+  </form>
+</section>
+{% endblock %}

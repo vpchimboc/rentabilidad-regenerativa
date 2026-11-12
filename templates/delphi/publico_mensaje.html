@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% load iconos %}
+{% block migas %}{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Evaluación experta del FRR</span>{% endblock %}
+
+{% block contenido %}
+<section class="tarjeta">
+  <p class="eyebrow">Ronda {{ ronda.numero }}</p>
+  <h1>{{ titulo }}</h1>
+  <p class="lede">{{ texto }}</p>
+</section>
+{% endblock %}

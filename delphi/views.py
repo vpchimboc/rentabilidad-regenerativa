@@ -28,6 +28,44 @@ def ya_evaluo_en(ronda, experto):
             or Dictamen.objects.filter(ronda=ronda, experto=experto).exists())
 
 
+def guardar_evaluacion(request, ronda, experto, items):
+    """Registra la evaluación completa (P1–P12 y P13–P14) en una transacción. Devuelve (n, error)."""
+    valores = {}
+    for item in items:
+        valor = request.POST.get(f"item_{item.id}")
+        if valor:
+            if valor not in {"1", "2", "3", "4", "5"}:
+                return 0, f"Valoración inválida en {item.codigo}."
+            valores[item] = int(valor)
+    recomendacion = request.POST.get("recomendacion", "")
+    recomendacion = recomendacion if recomendacion in dict(Dictamen.RECOMENDACIONES) else ""
+    cambio = request.POST.get("cambio_prioritario", "").strip()
+    if not valores and not recomendacion and not cambio:
+        return 0, "El cuestionario está vacío: no se registró ninguna respuesta."
+    with transaction.atomic():
+        for item, valor in valores.items():
+            Respuesta.objects.create(ronda=ronda, experto=experto, item=item, valor=valor,
+                                     comentario=request.POST.get(f"comentario_{item.id}", "").strip()[:2000])
+        Dictamen.objects.create(ronda=ronda, experto=experto, cambio_prioritario=cambio[:5000],
+                                recomendacion=recomendacion)
+    registrar("CONFIG", request.user if request.user.is_authenticated else None, "Respuesta",
+              f"Evaluación registrada: {experto.nombre}, ronda {ronda.numero} ({len(valores)} valoraciones)")
+    return len(valores), None
+
+
+def filas_cuestionario(ronda, experto, items):
+    previas = {r.item_id: r for r in Respuesta.objects.filter(ronda=ronda, experto=experto)} if experto else {}
+    return [
+        {
+            "item": item,
+            "valor": previas[item.id].valor if item.id in previas else None,
+            "comentario": previas[item.id].comentario if item.id in previas else "",
+            "opciones": [{"n": n, "marcado": item.id in previas and previas[item.id].valor == n} for n in range(1, 6)],
+        }
+        for item in items
+    ]
+
+
 def cuestionario(request, pk):
     """Captura de las valoraciones Likert de un experto en una ronda."""
     ronda = get_object_or_404(Ronda, pk=pk)
@@ -49,50 +87,14 @@ def cuestionario(request, pk):
             messages.error(request, f"{experto.nombre} ya evaluó la ronda {ronda.numero}. "
                                     "Cada experto evalúa una sola vez por ronda.")
             return redirect(volver)
-        valores = {}
-        for item in items:
-            valor = request.POST.get(f"item_{item.id}")
-            if valor:
-                if valor not in {"1", "2", "3", "4", "5"}:
-                    messages.error(request, f"Valoración inválida en {item.codigo}.")
-                    return redirect(volver)
-                valores[item] = int(valor)
-        recomendacion = request.POST.get("recomendacion", "")
-        recomendacion = recomendacion if recomendacion in dict(Dictamen.RECOMENDACIONES) else ""
-        cambio = request.POST.get("cambio_prioritario", "").strip()
-        if not valores and not recomendacion and not cambio:
-            messages.error(request, "El cuestionario está vacío: no se registró ninguna respuesta.")
+        n, error = guardar_evaluacion(request, ronda, experto, items)
+        if error:
+            messages.error(request, error)
             return redirect(volver)
-        with transaction.atomic():
-            for item, valor in valores.items():
-                Respuesta.objects.create(ronda=ronda, experto=experto, item=item, valor=valor,
-                                         comentario=request.POST.get(f"comentario_{item.id}", "").strip())
-            Dictamen.objects.create(ronda=ronda, experto=experto, cambio_prioritario=cambio,
-                                    recomendacion=recomendacion)
-        registrar("CONFIG", request.user if request.user.is_authenticated else None, "Respuesta",
-                  f"Evaluación registrada: {experto.nombre}, ronda {ronda.numero} ({len(valores)} valoraciones)")
-        messages.success(request, f"{len(valores)} valoraciones registradas para {experto.nombre}.")
+        messages.success(request, f"{n} valoraciones registradas para {experto.nombre}.")
         return redirect("delphi_resultado", pk=ronda.pk)
 
-    previas = {}
-    if experto:
-        previas = {
-            r.item_id: r
-            for r in Respuesta.objects.filter(ronda=ronda, experto=experto)
-        }
-
-    filas = [
-        {
-            "item": item,
-            "valor": previas[item.id].valor if item.id in previas else None,
-            "comentario": previas[item.id].comentario if item.id in previas else "",
-            "opciones": [
-                {"n": n, "marcado": item.id in previas and previas[item.id].valor == n}
-                for n in range(1, 6)
-            ],
-        }
-        for item in items
-    ]
+    filas = filas_cuestionario(ronda, experto, items)
 
     return render(
         request,
@@ -325,3 +327,86 @@ def habilitar_reevaluacion(request, pk, experto_pk):
         return redirect(f"{reverse('delphi_cuestionario', args=[ronda.pk])}?experto={experto.pk}")
     return render(request, "delphi/habilitar_reevaluacion.html", {
         "ronda": ronda, "experto": experto, "n": Respuesta.objects.filter(ronda=ronda, experto=experto).count()})
+
+
+# ---------------- Autorregistro de expertos (enlace público por ronda) ----------------
+class RegistroExpertoForm(forms.ModelForm):
+    consentimiento = forms.BooleanField(
+        label="Acepto participar de forma voluntaria y que mis respuestas se analicen de forma anónima "
+              "con fines de investigación.")
+
+    class Meta:
+        model = Experto
+        fields = ["nombre", "correo", "grado", "institucion", "pais", "area", "anios_experiencia", "publicaciones"]
+        labels = {"nombre": "Nombres y apellidos", "correo": "Correo electrónico", "grado": "Grado académico más alto",
+                  "institucion": "Institución y cargo", "pais": "País", "area": "Especialidad / formación",
+                  "anios_experiencia": "Años de experiencia profesional",
+                  "publicaciones": "Número de publicaciones científicas"}
+        widgets = {"area": forms.Textarea(attrs={"rows": 2})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for campo in ("nombre", "correo", "grado", "institucion", "area"):
+            self.fields[campo].required = True
+        self.fields["grado"].choices = [("", "— seleccione —")] + Experto.GRADOS + [("OTR", "Otro")]
+
+    def _post_clean(self):
+        # «Otro» no es un grado del modelo: se guarda vacío.
+        if self.cleaned_data.get("grado") == "OTR":
+            self.cleaned_data["grado"] = ""
+        super()._post_clean()
+
+
+def _clave(ronda):
+    return f"delphi_experto_ronda_{ronda.pk}"
+
+
+def participar(request, pk):
+    """Paso 1 del enlace público: el experto se registra (o se identifica por su correo)."""
+    ronda = get_object_or_404(Ronda, pk=pk)
+    if ronda.estado == Ronda.CERRADA:
+        return render(request, "delphi/publico_mensaje.html", {
+            "ronda": ronda, "titulo": "Ronda cerrada",
+            "texto": "Esta ronda de evaluación ya está cerrada. Gracias por su interés."})
+    form = RegistroExpertoForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        datos = {k: v for k, v in form.cleaned_data.items() if k != "consentimiento"}
+        if datos["grado"] == "OTR":
+            datos["grado"] = ""
+        experto = Experto.objects.filter(correo__iexact=datos["correo"]).first()
+        if experto:
+            for k, v in datos.items():
+                setattr(experto, k, v)
+            experto.activo = True
+            experto.save()
+        else:
+            experto = Experto.objects.create(**datos, activo=True)
+            registrar("CONFIG", None, "Experto", f"Autorregistro: {experto.nombre} (ronda {ronda.numero})")
+        request.session[_clave(ronda)] = experto.pk
+        return redirect("delphi_responder", pk=ronda.pk)
+    return render(request, "delphi/participar.html", {"ronda": ronda, "form": form})
+
+
+def responder(request, pk):
+    """Paso 2 del enlace público: el experto registrado responde una sola vez."""
+    ronda = get_object_or_404(Ronda, pk=pk)
+    experto = Experto.objects.filter(pk=request.session.get(_clave(ronda))).first()
+    if experto is None:
+        return redirect("delphi_participar", pk=ronda.pk)
+    if ya_evaluo_en(ronda, experto):
+        return render(request, "delphi/publico_mensaje.html", {
+            "ronda": ronda, "titulo": "Evaluación registrada",
+            "texto": f"Gracias, {experto.nombre}. Su evaluación de la ronda {ronda.numero} quedó registrada. "
+                     "Cada experto evalúa una sola vez por ronda."})
+    if ronda.estado == Ronda.CERRADA:
+        return redirect("delphi_participar", pk=ronda.pk)
+    items = Item.objects.filter(activo=True)
+    if request.method == "POST":
+        n, error = guardar_evaluacion(request, ronda, experto, items)
+        if error:
+            messages.error(request, error)
+        else:
+            return redirect("delphi_responder", pk=ronda.pk)
+    return render(request, "delphi/responder.html", {
+        "ronda": ronda, "experto": experto, "filas": filas_cuestionario(ronda, None, items),
+        "recomendaciones": Dictamen.RECOMENDACIONES})

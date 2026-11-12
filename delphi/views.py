@@ -8,13 +8,26 @@ from delphi.stats import UMBRAL_IVC, UMBRAL_W, analizar_ronda
 
 
 def panel(request):
-    rondas = Ronda.objects.prefetch_related("respuestas")
+    from django.db.models import Count
+    rondas = list(Ronda.objects.annotate(
+        n_respuestas=Count("respuestas"), n_evaluaron=Count("dictamenes__experto", distinct=True)).order_by("-numero"))
+    expertos = list(Experto.objects.all())
+    activos = sum(1 for e in expertos if e.activo)
+    for r in rondas:
+        r.avance = round(100 * r.n_evaluaron / activos) if activos else 0
+        r.enlace = request.build_absolute_uri(reverse("delphi_participar", args=[r.pk]))
     return render(
         request,
         "delphi/panel.html",
         {
             "rondas": rondas,
-            "expertos": Experto.objects.all(),
+            "expertos": expertos,
+            "resumen": {
+                "expertos": activos,
+                "cumplen": sum(1 for e in expertos if e.activo and e.cumple_criterios),
+                "abiertas": sum(1 for r in rondas if r.estado == Ronda.ABIERTA),
+                "evaluaciones": Dictamen.objects.count(),
+            },
             "items": Item.objects.filter(activo=True),
             "umbral_ivc": UMBRAL_IVC,
             "umbral_w": UMBRAL_W,
@@ -40,6 +53,11 @@ def guardar_evaluacion(request, ronda, experto, items):
     recomendacion = request.POST.get("recomendacion", "")
     recomendacion = recomendacion if recomendacion in dict(Dictamen.RECOMENDACIONES) else ""
     cambio = request.POST.get("cambio_prioritario", "").strip()
+    # Comentarios de afirmaciones sin calificar («No evaluable»): se conservan junto a P13.
+    sin_valor = [f"[{i.codigo}] {request.POST.get(f'comentario_{i.id}', '').strip()}" for i in items
+                 if i not in valores and request.POST.get(f"comentario_{i.id}", "").strip()]
+    if sin_valor:
+        cambio = "\n".join(([cambio] if cambio else []) + ["Afirmaciones no calificadas:"] + sin_valor)
     if not valores and not recomendacion and not cambio:
         return 0, "El cuestionario está vacío: no se registró ninguna respuesta."
     with transaction.atomic():

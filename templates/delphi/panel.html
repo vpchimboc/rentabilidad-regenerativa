@@ -4,95 +4,177 @@
 {% block migas %}{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Validación Delphi</span>{% endblock %}
 
 {% block contenido %}
+<style>
+  .dp-resumen { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; margin:4px 0 18px; }
+  .dp-cifra { background:var(--c-superficie, #fff); border:1px solid var(--c-borde, #e4e7ec); border-radius:12px; padding:14px 16px; }
+  .dp-cifra .v { font-size:1.9rem; font-weight:700; line-height:1.1; color:var(--c-primario, #1f5f8b); }
+  .dp-cifra .e { font-size:.85rem; color:var(--c-texto-2, #667085); }
+  .dp-pasos { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; counter-reset:paso; margin:0 0 20px; padding:0; list-style:none; }
+  .dp-pasos li { counter-increment:paso; position:relative; padding:12px 12px 12px 48px; border-radius:12px;
+                 background:var(--c-primario-suave, #eaf2f8); font-size:.9rem; line-height:1.35; }
+  .dp-pasos li::before { content:counter(paso); position:absolute; left:12px; top:12px; width:26px; height:26px; border-radius:50%;
+                 background:var(--c-primario, #1f5f8b); color:#fff; font-weight:700; display:grid; place-items:center; font-size:.85rem; }
+  .dp-pasos b { display:block; margin-bottom:2px; }
+  .dp-cab { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin:22px 0 10px; }
+  .dp-cab h2 { margin:0; }
+  .dp-rondas { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap:14px; }
+  .dp-ronda { border:1px solid var(--c-borde, #e4e7ec); border-radius:14px; padding:16px; background:var(--c-superficie, #fff);
+              display:flex; flex-direction:column; gap:12px; }
+  .dp-ronda.abierta { border-color:var(--c-exito, #12b76a); box-shadow:0 0 0 1px var(--c-exito, #12b76a) inset; }
+  .dp-ronda-cab { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .dp-ronda h3 { margin:0; font-size:1.15rem; }
+  .dp-estado { font-size:.78rem; font-weight:600; padding:4px 10px; border-radius:99px; white-space:nowrap; }
+  .dp-estado.abi { background:var(--c-exito-suave, #ecfdf3); color:var(--c-exito, #067647); }
+  .dp-estado.cer { background:var(--c-superficie-2, #f2f4f7); color:var(--c-texto-2, #475467); }
+  .dp-barra { height:8px; border-radius:99px; background:var(--c-superficie-2, #eef0f3); overflow:hidden; }
+  .dp-barra span { display:block; height:100%; background:var(--c-primario, #1f5f8b); }
+  .dp-enlace { display:flex; gap:6px; }
+  .dp-enlace input { flex:1; min-width:0; font-size:.82rem; }
+  .dp-acciones { display:flex; flex-wrap:wrap; gap:6px; }
+  .dp-acciones .boton { font-size:.88rem; padding:7px 12px; }
+  .dp-mas { font-size:.85rem; }
+  .dp-mas summary { cursor:pointer; color:var(--c-texto-2, #475467); list-style:none; }
+  .dp-mas summary::-webkit-details-marker { display:none; }
+  .dp-mas[open] summary { margin-bottom:8px; }
+  .dp-expertos { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap:12px; }
+  .dp-experto { border:1px solid var(--c-borde, #e4e7ec); border-radius:12px; padding:14px; background:var(--c-superficie, #fff);
+                display:flex; flex-direction:column; gap:6px; }
+  .dp-experto.inactivo { opacity:.6; }
+  .dp-experto .nom { font-weight:700; }
+  .dp-experto .meta { font-size:.83rem; color:var(--c-texto-2, #667085); }
+  .dp-vacio { border:1.5px dashed var(--c-borde-fuerte, #98a2b3); border-radius:12px; padding:22px; text-align:center; }
+  @media (max-width:860px) { .dp-resumen, .dp-pasos { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+  @media (max-width:480px) { .dp-pasos { grid-template-columns:1fr; } }
+</style>
+
 <section>
   <p class="eyebrow">Objetivo específico 5</p>
-  <div class="cabecera-pagina"><h1>Validación por método Delphi modificado</h1>
-    <a class="boton" href="{% url 'delphi_informe' %}">Descargar informe Delphi (Word)</a></div>
-  <p class="lede">Consulta estructurada e independiente a expertos, inspirada en el Delphi modificado y en criterios
-  de validez de contenido. Cada experto valora P1–P12 (escala 1–5) y responde P13–P14. El reporte de cada ronda
-  presenta puntuaciones, mediana, rango, proporción de respuestas 4–5 e I-CVI exploratorio por dimensión.</p>
+  <div class="cabecera-pagina">
+    <h1>Validación por juicio de expertos</h1>
+    <a class="boton" href="{% url 'delphi_informe' %}">{% icono "download" "ico-sm" %}Descargar informe (Word)</a>
+  </div>
+  <p class="lede">Los expertos se registran con el enlace de la ronda, valoran P1–P12 de 1 a 5 y responden P13–P14.
+    El reporte y el informe se generan automáticamente con las respuestas recibidas.</p>
 </section>
 
-<div class="split">
-  <section class="tarjeta">
-    <div class="tarjeta-cab"><h2>Rondas</h2>
-      {% if perms.delphi.add_ronda %}<a class="boton" href="{% url 'delphi_ronda_nueva' %}">Crear ronda</a>{% endif %}</div>
-    <div class="tscroll">
-      <table>
-        <thead><tr><th class="num">Ronda</th><th>Fecha</th><th>Estado</th>
-          <th class="num">Respuestas</th><th></th></tr></thead>
-        <tbody>
-        {% for r in rondas %}
-          <tr>
-            <td class="num">{{ r.numero }}</td>
-            <td>{{ r.fecha|date:"d/m/Y" }}</td>
-            <td>{{ r.get_estado_display }}</td>
-            <td class="num">{{ r.respuestas.count }}</td>
-            <td>
-              <a class="boton sec" href="{% url 'delphi_cuestionario' r.pk %}">Cuestionario</a>
-              <a class="boton sec" href="{% url 'delphi_resultado' r.pk %}">Resultados</a>
-              <a class="boton" href="{% url 'delphi_reporte' r.pk %}">Reporte</a>
-              {% if r.estado == "ABI" %}<a class="boton sec" href="{% url 'delphi_participar' r.pk %}" target="_blank" rel="noopener"
-                 title="Enlace público para que los expertos se registren y respondan">Enlace para expertos</a>{% endif %}
-              {% if perms.delphi.change_ronda %}<a class="boton sec" href="{% url 'delphi_ronda_editar' r.pk %}">Editar</a>{% endif %}
-              {% if perms.delphi.delete_ronda %}<a class="boton sec" href="{% url 'delphi_ronda_eliminar' r.pk %}">Eliminar</a>{% endif %}
-            </td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="5" class="nota">No hay rondas. Use «Crear ronda».</td></tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="tarjeta">
-    <div class="tarjeta-cab"><h2>Panel de expertos</h2>
-      {% if perms.delphi.add_experto %}<a class="boton" href="{% url 'delphi_experto_nuevo' %}">Agregar experto</a>{% endif %}</div>
-    <div class="tscroll">
-      <table>
-        <thead><tr><th>Experto</th><th>Grado</th><th>Institución</th>
-          <th class="num">Años</th><th class="num">Public.</th><th>Criterios</th><th></th></tr></thead>
-        <tbody>
-        {% for e in expertos %}
-          <tr>
-            <td>{{ e.nombre }}</td>
-            <td>{{ e.get_grado_display }}</td>
-            <td class="nota">{{ e.institucion }}</td>
-            <td class="num">{{ e.anios_experiencia }}</td>
-            <td class="num">{{ e.publicaciones }}</td>
-            <td>{% if e.cumple_criterios %}<span class="pill l4">cumple</span>
-                {% else %}<span class="pill l1">revisar</span>{% endif %}{% if not e.activo %} <span class="etq neutro">inactivo</span>{% endif %}</td>
-            <td style="white-space:nowrap">
-              {% if perms.delphi.change_experto %}<a class="boton sec" href="{% url 'delphi_experto_editar' e.pk %}">Editar</a>{% endif %}
-              {% if perms.delphi.delete_experto %}<a class="boton sec" href="{% url 'delphi_experto_eliminar' e.pk %}">Eliminar</a>{% endif %}
-            </td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="7" class="nota">Sin expertos registrados.</td></tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </section>
+<div class="dp-resumen">
+  <div class="dp-cifra"><div class="v">{{ resumen.expertos }}</div><div class="e">Expertos activos</div></div>
+  <div class="dp-cifra"><div class="v">{{ resumen.cumplen }}</div><div class="e">Cumplen criterios de selección</div></div>
+  <div class="dp-cifra"><div class="v">{{ resumen.abiertas }}</div><div class="e">Rondas abiertas</div></div>
+  <div class="dp-cifra"><div class="v">{{ resumen.evaluaciones }}</div><div class="e">Evaluaciones recibidas</div></div>
 </div>
 
-<section class="tarjeta">
-  <h2>Cuestionario ({{ items.count }} ítems, escala Likert 1–5)</h2>
-  <div class="tscroll">
+<ol class="dp-pasos">
+  <li><b>Abra una ronda</b>Cree la ronda con su fecha y estado «Abierta».</li>
+  <li><b>Comparta el enlace</b>Copie el enlace de la ronda y envíelo a los expertos.</li>
+  <li><b>Reciba respuestas</b>Cada experto se registra y evalúa una sola vez.</li>
+  <li><b>Analice</b>Revise el reporte de la ronda y descargue el informe.</li>
+</ol>
+
+<div class="dp-cab">
+  <h2>Rondas de evaluación</h2>
+  {% if perms.delphi.add_ronda %}<a class="boton" href="{% url 'delphi_ronda_nueva' %}">{% icono "plus" "ico-sm" %}Crear ronda</a>{% endif %}
+</div>
+{% if rondas %}
+<div class="dp-rondas">
+  {% for r in rondas %}
+  <article class="dp-ronda {% if r.estado == 'ABI' %}abierta{% endif %}">
+    <div class="dp-ronda-cab">
+      <div>
+        <h3>Ronda {{ r.numero }}</h3>
+        <div class="nota">{% icono "calendar" "ico-sm" %} {{ r.fecha|date:"d/m/Y" }}</div>
+      </div>
+      <span class="dp-estado {% if r.estado == 'ABI' %}abi{% else %}cer{% endif %}">{{ r.get_estado_display }}</span>
+    </div>
+
+    <div>
+      <div class="nota" style="margin-bottom:5px">{{ r.n_evaluaron }} de {{ resumen.expertos }} expertos evaluaron · {{ r.n_respuestas }} valoraciones</div>
+      <div class="dp-barra" role="progressbar" aria-valuenow="{{ r.avance }}" aria-valuemin="0" aria-valuemax="100"><span style="width:{{ r.avance }}%"></span></div>
+    </div>
+
+    {% if r.estado == "ABI" %}
+    <div>
+      <label class="nota" for="enlace{{ r.pk }}">Enlace para expertos</label>
+      <div class="dp-enlace">
+        <input id="enlace{{ r.pk }}" type="text" value="{{ r.enlace }}" readonly onclick="this.select()">
+        <button class="boton sec" type="button" data-copiar="enlace{{ r.pk }}">Copiar</button>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="dp-acciones">
+      <a class="boton" href="{% url 'delphi_reporte' r.pk %}">{% icono "file-text" "ico-sm" %}Reporte</a>
+      <a class="boton sec" href="{% url 'delphi_resultado' r.pk %}">{% icono "chart-line" "ico-sm" %}Estadística</a>
+      {% if r.estado == "ABI" %}<a class="boton sec" href="{% url 'delphi_participar' r.pk %}" target="_blank" rel="noopener">{% icono "eye" "ico-sm" %}Ver como experto</a>{% endif %}
+    </div>
+
+    <details class="dp-mas">
+      <summary>{% icono "settings" "ico-sm" %} Más opciones</summary>
+      <div class="dp-acciones">
+        <a class="boton sec" href="{% url 'delphi_cuestionario' r.pk %}">{% icono "pencil" "ico-sm" %}Registrar respuestas manualmente</a>
+        {% if perms.delphi.change_ronda %}<a class="boton sec" href="{% url 'delphi_ronda_editar' r.pk %}">{% icono "calendar" "ico-sm" %}Editar fecha o estado</a>{% endif %}
+        {% if perms.delphi.delete_ronda %}<a class="boton sec" href="{% url 'delphi_ronda_eliminar' r.pk %}">{% icono "x" "ico-sm" %}Eliminar</a>{% endif %}
+      </div>
+    </details>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="dp-vacio"><p><b>Todavía no hay rondas.</b></p><p class="nota">Cree la primera ronda para obtener el enlace que compartirá con los expertos.</p></div>
+{% endif %}
+
+<div class="dp-cab">
+  <h2>Panel de expertos</h2>
+  {% if perms.delphi.add_experto %}<a class="boton sec" href="{% url 'delphi_experto_nuevo' %}">{% icono "plus" "ico-sm" %}Agregar experto</a>{% endif %}
+</div>
+{% if expertos %}
+<div class="dp-expertos">
+  {% for e in expertos %}
+  <article class="dp-experto {% if not e.activo %}inactivo{% endif %}">
+    <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+      <span class="nom">{{ e.nombre }}</span>
+      {% if e.cumple_criterios %}<span class="pill l4">cumple</span>{% else %}<span class="pill l1" title="Complete grado, años de experiencia (≥ 5) y publicaciones">revisar</span>{% endif %}
+    </div>
+    <div class="meta">{{ e.get_grado_display|default:"Grado sin registrar" }}{% if e.pais %} · {{ e.pais }}{% endif %}</div>
+    {% if e.institucion %}<div class="meta">{% icono "building" "ico-sm" %} {{ e.institucion }}</div>{% endif %}
+    <div class="meta">{{ e.anios_experiencia }} años de experiencia · {{ e.publicaciones }} publicaciones{% if not e.activo %} · <b>inactivo</b>{% endif %}</div>
+    {% if perms.delphi.change_experto or perms.delphi.delete_experto %}
+    <div class="dp-acciones" style="margin-top:4px">
+      {% if perms.delphi.change_experto %}<a class="boton sec" href="{% url 'delphi_experto_editar' e.pk %}">{% icono "pencil" "ico-sm" %}Editar</a>{% endif %}
+      {% if perms.delphi.delete_experto %}<a class="boton sec" href="{% url 'delphi_experto_eliminar' e.pk %}">{% icono "x" "ico-sm" %}Eliminar</a>{% endif %}
+    </div>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="dp-vacio"><p><b>Aún no hay expertos.</b></p><p class="nota">Se registran solos con el enlace de una ronda abierta, o puede agregarlos manualmente.</p></div>
+{% endif %}
+
+<details class="tarjeta" style="margin-top:22px">
+  <summary style="cursor:pointer"><b>Ver el cuestionario ({{ items.count }} afirmaciones, escala 1–5)</b></summary>
+  <div class="tscroll" style="margin-top:12px">
     <table>
       <thead><tr><th>Código</th><th>Criterio</th><th>Componente evaluado</th><th>Enunciado</th></tr></thead>
       <tbody>
       {% for i in items %}
-        <tr>
-          <td><code>{{ i.codigo }}</code></td>
-          <td>{{ i.get_criterio_display }}</td>
-          <td>{{ i.componente }}</td>
-          <td class="nota">{{ i.enunciado }}</td>
-        </tr>
+        <tr><td><code>{{ i.codigo }}</code></td><td>{{ i.get_criterio_display }}</td><td>{{ i.componente }}</td>
+          <td class="nota">{{ i.enunciado }}</td></tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
-</section>
+</details>
+
+<script>
+document.querySelectorAll("[data-copiar]").forEach(function (b) {
+  b.addEventListener("click", function () {
+    var campo = document.getElementById(b.dataset.copiar);
+    campo.select();
+    var listo = function () { var t = b.textContent; b.textContent = "¡Copiado!"; setTimeout(function () { b.textContent = t; }, 1600); };
+    if (navigator.clipboard) { navigator.clipboard.writeText(campo.value).then(listo, function () { document.execCommand("copy"); listo(); }); }
+    else { document.execCommand("copy"); listo(); }
+  });
+});
+</script>
 {% endblock %}

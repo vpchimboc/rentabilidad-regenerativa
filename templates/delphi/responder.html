@@ -4,43 +4,136 @@
 {% block migas %}{% icono "chevron-right" "ico-sm" %}<span aria-current="page">Evaluación experta del FRR</span>{% endblock %}
 
 {% block contenido %}
+<style>
+  .ev-item { border:1px solid var(--c-borde, #d0d5dd); border-radius:12px; padding:16px; margin:0 0 14px;
+             background:var(--c-superficie, #fff); min-width:0; transition:border-color .15s, box-shadow .15s; }
+  .ev-item.listo { border-color:var(--c-primario, #1f5f8b); box-shadow:0 0 0 1px var(--c-primario, #1f5f8b) inset; }
+  .ev-item.noeval { opacity:.75; }
+  .ev-item legend { float:left; width:100%; padding:0; margin-bottom:12px; font-size:1.02rem; line-height:1.45; }
+  .ev-cod { display:inline-block; min-width:2.6em; font-weight:700; color:var(--c-primario, #1f5f8b); }
+  .ev-escala { clear:both; display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; }
+  .ev-escala input, .ev-op input { position:absolute; opacity:0; pointer-events:none; }
+  .ev-escala label { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+             min-height:64px; padding:8px 4px; border:1.5px solid var(--c-borde, #d0d5dd); border-radius:10px;
+             cursor:pointer; text-align:center; color:inherit; background:var(--c-superficie-2, #f8f9fb);
+             transition:background .15s, border-color .15s, transform .1s; user-select:none; }
+  .ev-escala label:hover { border-color:var(--c-primario, #1f5f8b); }
+  .ev-escala label:active { transform:scale(.97); }
+  .ev-escala .n { font-size:1.35rem; font-weight:700; line-height:1; }
+  .ev-escala .t { font-size:.72rem; line-height:1.2; opacity:.85; }
+  .ev-escala input:checked + label { background:var(--c-primario, #1f5f8b); border-color:var(--c-primario, #1f5f8b); color:#fff; }
+  .ev-escala input:focus-visible + label, .ev-op input:focus-visible + span { outline:3px solid var(--c-primario, #1f5f8b); outline-offset:2px; }
+  .ev-escala input:disabled + label { cursor:not-allowed; opacity:.45; }
+  .ev-pie { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:10px; }
+  .ev-pie input[type=text] { flex:1 1 240px; min-width:0; }
+  .ev-noeval { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px;
+             border:1.5px dashed var(--c-borde-fuerte, #98a2b3); cursor:pointer; font-size:.88rem; color:inherit; }
+  .ev-noeval input { accent-color:var(--c-primario, #1f5f8b); }
+  .ev-ops { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:8px; }
+  .ev-op span { display:block; padding:14px 8px; text-align:center; border:1.5px solid var(--c-borde, #d0d5dd);
+             border-radius:10px; cursor:pointer; font-weight:600; background:var(--c-superficie-2, #f8f9fb); }
+  .ev-op input:checked + span { background:var(--c-primario, #1f5f8b); border-color:var(--c-primario, #1f5f8b); color:#fff; }
+  .ev-progreso { position:sticky; top:0; z-index:5; background:var(--c-fondo, #fff); padding:10px 0 12px; margin-bottom:8px; }
+  .ev-barra { height:8px; border-radius:99px; background:var(--c-superficie-2, #eef0f3); overflow:hidden; }
+  .ev-barra span { display:block; height:100%; width:0; background:var(--c-primario, #1f5f8b); transition:width .25s; }
+  .ev-enviar { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:18px; }
+  .ev-enviar .boton { font-size:1.05rem; padding:12px 26px; }
+  @media (max-width:560px) {
+    .ev-escala { grid-template-columns:repeat(5, 1fr); gap:5px; }
+    .ev-escala .t { font-size:.62rem; }
+    .ev-escala label { min-height:58px; }
+    .ev-ops { grid-template-columns:1fr; }
+  }
+</style>
+
 <section>
   <p class="eyebrow">Ronda {{ ronda.numero }} · {{ experto.nombre }}</p>
   <h1>Paso 2 de 2 · Cuestionario</h1>
-  <p class="lede">Marque una sola opción por afirmación: 1 = muy deficiente, 2 = deficiente, 3 = aceptable,
-    4 = bueno, 5 = excelente. Si no cuenta con información suficiente, deje la pregunta sin marcar y escriba
-    «No evaluable» en el comentario; no use 3 para expresar desconocimiento.</p>
+  <p class="lede">Elija una calificación por afirmación. Si no cuenta con información suficiente para juzgar una
+    afirmación, marque <b>«No evaluable»</b> en lugar de elegir 3.</p>
 </section>
-<section class="tarjeta">
-  <form method="post">{% csrf_token %}
-    {% for f in filas %}
-      <fieldset style="border:0;border-bottom:1px solid rgba(127,127,127,.25);padding:12px 0;margin:0;min-width:0">
-        <legend style="padding:0"><b>P{{ forloop.counter }}.</b> {{ f.item.enunciado }}</legend>
-        <div style="margin:8px 0">
-          {% for o in f.opciones %}
-            <label style="display:inline-block;margin-right:14px;color:inherit">
-              <input type="radio" name="item_{{ f.item.id }}" value="{{ o.n }}"> {{ o.n }}</label>
-          {% endfor %}
-        </div>
-        <input type="text" name="comentario_{{ f.item.id }}" placeholder="Comentario (opcional)" style="width:100%">
-      </fieldset>
-    {% endfor %}
-    <div style="margin-top:16px">
-      <label for="cambio_prioritario"><b>P13.</b> ¿Qué cambio considera prioritario en el Framework o en algún KPI?
-        Indique código y justificación.</label>
-      <textarea id="cambio_prioritario" name="cambio_prioritario" rows="4" style="width:100%"></textarea>
-    </div>
-    <fieldset style="margin-top:12px;border:0;padding:0">
-      <legend><b>P14.</b> ¿Recomienda mantener el FRR para evaluación exploratoria?</legend>
-      {% for valor, texto in recomendaciones %}
-        <label style="display:inline-block;margin-right:14px;color:inherit">
-          <input type="radio" name="recomendacion" value="{{ valor }}"> {{ texto }}</label>
-      {% endfor %}
+
+<form method="post" id="ev-form">{% csrf_token %}
+  <div class="ev-progreso" aria-live="polite">
+    <div class="nota" style="margin-bottom:6px"><b id="ev-cuenta">0</b> de {{ filas|length }} afirmaciones respondidas</div>
+    <div class="ev-barra"><span id="ev-barra"></span></div>
+  </div>
+
+  {% for f in filas %}
+    <fieldset class="ev-item" data-item>
+      <legend><span class="ev-cod">P{{ forloop.counter }}.</span>{{ f.item.enunciado }}</legend>
+      <div class="ev-escala" role="radiogroup" aria-label="Calificación de P{{ forloop.counter }}">
+        {% for o in f.opciones %}
+          <input type="radio" id="i{{ f.item.id }}_{{ o.n }}" name="item_{{ f.item.id }}" value="{{ o.n }}">
+          <label for="i{{ f.item.id }}_{{ o.n }}"><span class="n">{{ o.n }}</span>
+            <span class="t">{% cycle "Muy deficiente" "Deficiente" "Aceptable" "Bueno" "Excelente" %}</span></label>
+        {% endfor %}
+      </div>
+      <div class="ev-pie">
+        <label class="ev-noeval"><input type="checkbox" data-noeval> No evaluable</label>
+        <input type="text" name="comentario_{{ f.item.id }}" placeholder="Comentario u observación (opcional)"
+               aria-label="Comentario de P{{ forloop.counter }}">
+      </div>
     </fieldset>
-    <p style="margin-top:16px">
-      <button class="boton" type="submit"
-        onclick="return confirm('Su evaluación es definitiva: cada experto evalúa una sola vez por ronda. ¿Enviar?')">Enviar evaluación</button>
-    </p>
-  </form>
-</section>
+  {% endfor %}
+
+  <section class="tarjeta">
+    <label for="cambio_prioritario"><b>P13.</b> ¿Qué cambio considera prioritario en el Framework o en algún KPI?
+      Indique código y justificación.</label>
+    <textarea id="cambio_prioritario" name="cambio_prioritario" rows="4" style="width:100%;margin-top:8px"
+              placeholder="Ej.: A10 — definir la línea base ecológica y su fuente de verificación."></textarea>
+
+    <fieldset style="border:0;padding:0;margin:18px 0 0;min-width:0">
+      <legend><b>P14.</b> ¿Recomienda mantener el FRR para evaluación exploratoria?</legend>
+      <div class="ev-ops">
+        {% for valor, texto in recomendaciones %}
+          <label class="ev-op"><input type="radio" name="recomendacion" value="{{ valor }}"><span>{{ texto }}</span></label>
+        {% endfor %}
+      </div>
+    </fieldset>
+  </section>
+
+  <div class="ev-enviar">
+    <button class="boton" type="submit">Enviar evaluación</button>
+    <span class="nota">Su evaluación es definitiva: cada experto evalúa una sola vez por ronda.</span>
+  </div>
+</form>
+
+<script>
+(function () {
+  var form = document.getElementById("ev-form");
+  var items = Array.prototype.slice.call(form.querySelectorAll("[data-item]"));
+  function actualizar() {
+    var hechos = 0;
+    items.forEach(function (it) {
+      var marcado = it.querySelector("input[type=radio]:checked");
+      var noeval = it.querySelector("[data-noeval]").checked;
+      it.classList.toggle("listo", !!marcado || noeval);
+      it.classList.toggle("noeval", noeval);
+      if (marcado || noeval) hechos++;
+    });
+    document.getElementById("ev-cuenta").textContent = hechos;
+    document.getElementById("ev-barra").style.width = (100 * hechos / items.length) + "%";
+  }
+  items.forEach(function (it) {
+    var chk = it.querySelector("[data-noeval]");
+    var radios = it.querySelectorAll("input[type=radio]");
+    var com = it.querySelector("input[type=text]");
+    chk.addEventListener("change", function () {
+      radios.forEach(function (r) { r.checked = false; r.disabled = chk.checked; });
+      if (chk.checked && !com.value.trim()) com.value = "No evaluable";
+      if (!chk.checked && com.value.trim() === "No evaluable") com.value = "";
+      actualizar();
+    });
+    radios.forEach(function (r) { r.addEventListener("change", actualizar); });
+  });
+  form.addEventListener("submit", function (e) {
+    var pendientes = items.filter(function (it) { return !it.classList.contains("listo"); }).length;
+    var msg = (pendientes ? "Quedan " + pendientes + " afirmaciones sin responder. " : "") +
+              "Su evaluación es definitiva. ¿Desea enviarla?";
+    if (!confirm(msg)) e.preventDefault();
+  });
+  actualizar();
+})();
+</script>
 {% endblock %}

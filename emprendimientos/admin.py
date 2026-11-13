@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from emprendimientos.models import Emprendimiento, Evaluacion, Medicion, Periodo, VerificacionSalvaguarda
+from emprendimientos.models import (Emprendimiento, Evaluacion, FichaEcologica, Medicion, Periodo,
+                                     VerificacionSalvaguarda)
 
 
 class MedicionInline(admin.TabularInline):
@@ -13,6 +14,20 @@ class MedicionInline(admin.TabularInline):
 class SalvaguardaInline(admin.TabularInline):
     model = VerificacionSalvaguarda
     extra = 0
+
+
+class FichaEcologicaInline(admin.StackedInline):
+    model = FichaEcologica
+    extra = 0
+    max_num = 1
+    verbose_name = "ficha ecológica A10 (resultado ecológico neto y salvaguarda G3)"
+    fieldsets = (
+        ("Variable ecológica", {"fields": ("variable", "justificacion", "unidad", "metodo", "direccion")}),
+        ("Línea base y seguimiento", {"fields": (("y0", "y0_fecha"), ("yt", "yt_fecha"))}),
+        ("Área y período", {"fields": ("area", ("periodo_inicio", "periodo_fin"), "estacionalidad")}),
+        ("Contribución del emprendimiento", {"fields": ("contribucion", ("y0_referencia", "yt_referencia"))}),
+        ("Verificación", {"fields": ("fuentes", "estado", "responsable")}),
+    )
 
 
 class PeriodoInline(admin.TabularInline):
@@ -33,7 +48,7 @@ class EmprendimientoAdmin(admin.ModelAdmin):
 class PeriodoAdmin(admin.ModelAdmin):
     list_display = ("emprendimiento", "anio", "ventas", "punto_equilibrio", "margen_sobre_break_even")
     list_filter = ("anio", "emprendimiento")
-    inlines = [MedicionInline, SalvaguardaInline]
+    inlines = [FichaEcologicaInline, MedicionInline, SalvaguardaInline]
 
     @admin.display(description="Punto de equilibrio (USD)")
     def punto_equilibrio(self, obj):

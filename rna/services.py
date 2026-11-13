@@ -54,7 +54,7 @@ def _presencia(dimensiones, solo=None):
     return {
         i.codigo: 1.0 for dim in dimensiones if solo is None or dim.codigo in solo
         for var in dim.variables.all() for i in var.indicadores.all()
-        if i.estado != Indicador.EXCLUIDO and not i.puntuable
+        if i.estado != Indicador.EXCLUIDO and not i.puntuable and i.codigo != "A10"  # A10 no se simula
     }
 
 

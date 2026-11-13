@@ -173,9 +173,30 @@ class SalvaguardasYClasificacionTest(TestCase):
         for i in Indicador.objects.all():
             Medicion.objects.create(periodo=p, indicador=i, valor=med[i.codigo], fuente="registro")
         r = evaluar(p.mediciones_dict(), periodo=p)
+        # Un valor suelto de A10 ya no basta: G3 exige la ficha ecológica verificada.
+        self.assertIsNone(r["salvaguardas"]["G3"]["valor"])
+        self.assertNotEqual(r["clasificacion"], "e")
+        ficha = _ficha_a10(p)
+        r = evaluar(p.mediciones_dict(), periodo=p)
         self.assertEqual({k: v["valor"] for k, v in r["salvaguardas"].items()}, {"G1": 1, "G2": 1, "G3": 1, "G4": 1, "G5": 1})
         self.assertEqual(r["R"], 1)
         self.assertEqual(r["clasificacion"], "e")
+        # El sitio de referencia mejoró más que el área intervenida: el efecto ajustado no es favorable.
+        ficha.y0_referencia, ficha.yt_referencia = 40.0, 60.0
+        ficha.save()
+        self.assertEqual(evaluar(p.mediciones_dict(), periodo=p)["salvaguardas"]["G3"]["valor"], 0)
+
+    def test_ficha_a10_incompleta_o_no_verificada_deja_g3_indeterminada(self):
+        p = self._periodo()
+        ficha = _ficha_a10(p, estado="NV")
+        g3 = evaluar(_todos(_medio), periodo=p)["salvaguardas"]["G3"]
+        self.assertIsNone(g3["valor"])
+        self.assertIn("no evaluable", g3["detalle"])
+        ficha.estado, ficha.fuentes = "OBS", ""
+        ficha.save()
+        g3 = evaluar(_todos(_medio), periodo=p)["salvaguardas"]["G3"]
+        self.assertIsNone(g3["valor"])
+        self.assertIn("Fuentes de verificación", g3["detalle"])
 
     def test_salvaguarda_incumplida_impide_regeneracion(self):
         p = self._periodo()
@@ -184,6 +205,17 @@ class SalvaguardasYClasificacionTest(TestCase):
         self.assertEqual(r["R"], 0)
         self.assertNotEqual(r["clasificacion"], "e")
         self.assertIn("salvaguarda social incumplida", r["veredicto"])
+
+
+def _ficha_a10(periodo, estado="OBS"):
+    import datetime
+    from emprendimientos.models import FichaEcologica
+    return FichaEcologica.objects.create(
+        periodo=periodo, variable="Cobertura de vegetación nativa", unidad="%", metodo="Parcelas permanentes",
+        direccion="AUM", y0=40.0, y0_fecha=datetime.date(2024, 3, 1), yt=48.0, yt_fecha=datetime.date(2025, 3, 1),
+        area="Polígono de 2 ha junto a la finca", periodo_inicio=datetime.date(2024, 3, 1),
+        periodo_fin=datetime.date(2025, 3, 1), contribucion="Restauración con especies nativas documentada",
+        fuentes="Informe de monitoreo de campo", estado=estado)
 
 
 class MatrizReferenciasTest(TestCase):

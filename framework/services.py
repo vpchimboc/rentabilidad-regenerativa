@@ -63,6 +63,25 @@ def _agregar(puntajes, alfas, epsilon):
     return irr, irr0
 
 
+def _g3(periodo, manual):
+    """G3 solo se cumple con la ficha ecológica A10 completa y verificada (estado del ecosistema, no
+    eficiencia). Una verificación manual puede declarar incumplimiento, pero no cumplimiento sin ficha."""
+    ficha = getattr(periodo, "ficha_ecologica", None) if periodo is not None else None
+    if ficha is None:
+        if manual == 0:
+            return _g(0, "verificación", "Incumplimiento documentado")
+        return _g(None, "regla", "A10 no evaluable: falta la ficha ecológica (variable de estado, línea base, "
+                                 "seguimiento, área, período, contribución y fuentes)")
+    if not ficha.verificada:
+        motivo = (f"faltan: {', '.join(ficha.faltantes())}" if not ficha.completa
+                  else f"evidencia {ficha.get_estado_display().lower()}")
+        return _g(0 if manual == 0 else None, "regla", f"A10 no evaluable con evidencia observada ({motivo})")
+    d = ficha.delta_ajustado if ficha.delta_ajustado is not None else ficha.delta
+    texto = (f"{ficha.variable}: ΔY{'_aj' if ficha.delta_ajustado is not None else ''} = {d:g} {ficha.unidad} "
+             f"({ficha.get_direccion_display().lower()})")
+    return _g(1 if ficha.favorable else 0, "ficha A10", texto)
+
+
 def _g(valor, origen, detalle):
     return {"valor": valor, "origen": origen, "detalle": detalle}
 
@@ -150,13 +169,7 @@ def evaluar(mediciones, dimensiones=None, *, periodo=None, no_aplicables=(), sal
     g["G2"] = (_g(manuales["G2"], "verificación", "Verificación documentada") if "G2" in manuales else
                _g(None, "pendiente", "Requiere verificación de seguridad, derechos laborales y quejas (S4, S8, S9)"))
 
-    a10 = mediciones.get("A10")
-    if "G3" in manuales:
-        g["G3"] = _g(manuales["G3"], "verificación", "Verificación documentada")
-    elif a10 is None:
-        g["G3"] = _g(None, "regla", "Sin resultado ecológico neto (A10) frente a línea base")
-    else:
-        g["G3"] = _g(1 if a10 > 0 else 0, "regla", f"A10 = {a10:g} (Y_t − Y_0)")
+    g["G3"] = _g3(periodo, manuales.get("G3"))
 
     if "G4" in manuales:
         g["G4"] = _g(manuales["G4"], "verificación", "Verificación documentada")

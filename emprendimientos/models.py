@@ -184,6 +184,92 @@ class Medicion(models.Model):
         return self.indicador.normalizar(self.valor_efectivo)
 
 
+class FichaEcologica(models.Model):
+    """Ficha operacional del indicador A10 «Resultado ecológico neto» (corrección por observación experta).
+
+    Distingue la eficiencia ambiental (A1–A9) de una mejora verificable en el ESTADO del ecosistema.
+    ΔY = Y_t − Y_0 es descriptivo: sin anclas validadas A10 no se normaliza ni puntúa. Solo una ficha
+    completa y con evidencia verificada (OBS) permite evaluar la salvaguarda G3; en otro caso G3
+    queda indeterminada.
+    """
+
+    AUMENTO, DISMINUCION = "AUM", "DIS"
+    DIRECCIONES = [(AUMENTO, "Mejora si aumenta"), (DISMINUCION, "Mejora si disminuye")]
+    OBS, ND, NV, NA = "OBS", "ND", "NV", "NA"
+    ESTADOS = [(OBS, "Observado y verificable"), (ND, "No disponible"), (NV, "No verificable"),
+               (NA, "No aplicable (justificado)")]
+
+    periodo = models.OneToOneField(Periodo, on_delete=models.CASCADE, related_name="ficha_ecologica")
+    variable = models.CharField("Variable ecológica de estado", max_length=200, blank=True,
+                                help_text="Indicador de ESTADO del ecosistema (no de presión o eficiencia). "
+                                          "Ej.: cobertura de vegetación nativa, un parámetro de calidad de agua, "
+                                          "riqueza de especies nativas")
+    justificacion = models.TextField("Pertinencia local", blank=True)
+    unidad = models.CharField("Unidad de medida", max_length=60, blank=True, help_text="%, mg/L, individuos/ha, …")
+    metodo = models.TextField("Método de medición", blank=True)
+    direccion = models.CharField("Dirección favorable", max_length=3, choices=DIRECCIONES, blank=True,
+                                 help_text="Se define ANTES de analizar el resultado")
+    y0 = models.FloatField("Línea base Y₀", null=True, blank=True)
+    y0_fecha = models.DateField("Fecha de la línea base", null=True, blank=True)
+    yt = models.FloatField("Seguimiento Yₜ", null=True, blank=True)
+    yt_fecha = models.DateField("Fecha del seguimiento", null=True, blank=True)
+    area = models.TextField("Área de evaluación", blank=True,
+                            help_text="Polígono o coordenadas, superficie, ecosistema y relación con la intervención")
+    periodo_inicio = models.DateField("Inicio del período", null=True, blank=True)
+    periodo_fin = models.DateField("Fin del período", null=True, blank=True)
+    estacionalidad = models.CharField("Periodicidad y estacionalidad", max_length=200, blank=True)
+    contribucion = models.TextField("Contribución del emprendimiento", blank=True,
+                                    help_text="Acciones documentadas, localización, secuencia temporal, mecanismo "
+                                              "plausible y factores externos")
+    y0_referencia = models.FloatField("Y₀ del sitio de referencia", null=True, blank=True)
+    yt_referencia = models.FloatField("Yₜ del sitio de referencia", null=True, blank=True)
+    fuentes = models.TextField("Fuentes de verificación", blank=True,
+                               help_text="Monitoreo de campo, laboratorio, registros georreferenciados, auditoría")
+    estado = models.CharField("Estado de la evidencia", max_length=3, choices=ESTADOS, default=ND)
+    responsable = models.CharField(max_length=120, blank=True)
+
+    CAMPOS_REQUERIDOS = ["variable", "unidad", "metodo", "direccion", "y0", "y0_fecha", "yt", "yt_fecha", "area",
+                         "periodo_inicio", "periodo_fin", "contribucion", "fuentes"]
+
+    class Meta:
+        verbose_name = "ficha ecológica A10"
+        verbose_name_plural = "fichas ecológicas A10"
+
+    def __str__(self):
+        return f"A10 · {self.periodo}"
+
+    def faltantes(self):
+        return [self._meta.get_field(c).verbose_name for c in self.CAMPOS_REQUERIDOS
+                if getattr(self, c) in (None, "")]
+
+    @property
+    def completa(self):
+        return not self.faltantes()
+
+    @property
+    def verificada(self):
+        return self.completa and self.estado == self.OBS
+
+    @property
+    def delta(self):
+        return None if self.y0 is None or self.yt is None else self.yt - self.y0
+
+    @property
+    def delta_ajustado(self):
+        """ΔY_aj = (Yₜ − Y₀)_intervención − (Yₜ − Y₀)_referencia; por sí solo no demuestra causalidad."""
+        if self.delta is None or self.y0_referencia is None or self.yt_referencia is None:
+            return None
+        return self.delta - (self.yt_referencia - self.y0_referencia)
+
+    @property
+    def favorable(self):
+        """¿El cambio va en la dirección favorable definida? Usa ΔY ajustado si hay sitio de referencia."""
+        d = self.delta_ajustado if self.delta_ajustado is not None else self.delta
+        if d is None or not self.direccion:
+            return None
+        return d > 0 if self.direccion == self.AUMENTO else d < 0
+
+
 class VerificacionSalvaguarda(models.Model):
     """Verificación documentada de una condición habilitante G1–G5 (§2.4).
 

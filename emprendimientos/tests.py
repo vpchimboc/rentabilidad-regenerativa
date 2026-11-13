@@ -331,7 +331,7 @@ class SimularFaltantesTest(TestCase):
         self.assertEqual(Medicion.objects.count(), 1)  # simulación: no guarda
         call_command("simular_faltantes", aplicar=True, stdout=StringIO())
         sim = Medicion.objects.filter(simulado=True)
-        self.assertEqual(sim.count(), Indicador.objects.filter(variable__dimension__codigo__in=["D2", "D3", "D4"]).count() - 1)
+        self.assertEqual(sim.count(), Indicador.objects.filter(variable__dimension__codigo__in=["D2", "D3", "D4"]).count() - 2)  # A1 real · A10 no se simula
         self.assertTrue(all(m.fuente == "SIMULADO" for m in sim))
         real.refresh_from_db()
         self.assertEqual((real.estado, real.simulado), ("ND", False))

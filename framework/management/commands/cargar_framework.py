@@ -71,9 +71,15 @@ ESTRUCTURA = [
             ("A9", "Compras ambientales", "CA/CT", "CA: compras con criterio ambiental verificado; CT: compras totales elegibles.", PROP, BEN, "PEN"),
         ]),
         ("V-D2-3", "Resultado ecológico", [
-            ("A10", "Resultado ecológico neto", "Y_t − Y_0",
-             "Y_t: indicador de estado ecológico actual; Y_0: línea base comparable; orientación positiva definida. "
-             "No se infiere de reducción de emisiones ni de reciclaje.", "unidad del indicador", BEN, "SAL"),
+            ("A10", "Resultado ecológico neto", "ΔY = Y_t − Y_0 (ΔY_aj con sitio de referencia)",
+             "Variable de ESTADO del ecosistema seleccionada y justificada (no presión ni eficiencia), con unidad, "
+             "método, área georreferenciada y período. Y_0: línea base; Y_t: seguimiento comparable (método, escala, "
+             "estación y área). Dirección favorable definida antes de medir. Contribución: acción documentada, "
+             "secuencia temporal, mecanismo plausible, factores externos y comparación cuando proceda. Fuentes: "
+             "monitoreo de campo, laboratorio, registros georreferenciados o auditoría. Sin anclas validadas no se "
+             "normaliza ni puntúa; sin ficha verificada A10 es no evaluable y G3 indeterminada. Las mejoras en agua, "
+             "energía, residuos o emisiones no sustituyen la recuperación ecológica.",
+             "unidad de la variable ecológica", BEN, "SAL"),
         ]),
     ]),
     ("D3", "Valor social",

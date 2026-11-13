@@ -22,6 +22,8 @@ from emprendimientos.models import Medicion, Periodo
 from framework.models import Indicador
 
 FUENTE = "SIMULADO"
+# A10 exige una ficha ecológica verificada (estado del ecosistema): nunca se simula.
+NO_SIMULABLES = ("A10",)
 
 
 class Command(BaseCommand):
@@ -42,7 +44,8 @@ class Command(BaseCommand):
             return
         rng = random.Random(semilla)
         indicadores = list(Indicador.objects.filter(variable__dimension__codigo__in=dimensiones)
-                           .exclude(estado=Indicador.EXCLUIDO))
+                           .exclude(estado=Indicador.EXCLUIDO)
+                           .exclude(codigo__in=NO_SIMULABLES))
         nuevas, puntuables = [], 0
         for p in Periodo.objects.prefetch_related("mediciones"):
             existentes = {m.indicador_id for m in p.mediciones.all()}

@@ -145,7 +145,7 @@ RuntimeDirectory=${SERVICIO}
 RuntimeDirectoryMode=0750
 ExecStart=${VENV}/bin/gunicorn config.wsgi:application \\
     --bind unix:${SOCKET} --umask 007 \\
-    --workers 3 --timeout 120 \\
+    --workers 2 --timeout 120 \\
     --access-logfile - --error-logfile -
 Restart=always
 RestartSec=5
